@@ -1,8 +1,7 @@
 import { useState } from 'react'
 
-import './App.css'
 
-function App() {
+function Game() {
 const [board, setBoard] = useState(()=>{
     const loadBoard = window.localStorage.getItem("board")
     if(loadBoard)return JSON.parse(loadBoard);
@@ -18,8 +17,7 @@ return (
             <section>
             {
                 board.map(
-
-                
+                    
                 )
             }
             </section>
@@ -28,3 +26,5 @@ return (
     </>
 )
 }
+
+export default Game;
