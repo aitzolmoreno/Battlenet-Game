@@ -17,13 +17,35 @@ public class Board {
     }
 
     public boolean placeShip(Ship ship) {
+        for (Cell cell : ship.getCells()) {
+            int x = cell.getX();
+            int y = cell.getY();
+            
+            if (x < 0 || x >= size || y < 0 || y >= size) {
+                return false;
+            }
+            
+            if (grid[x][y].hasShip()) {
+                return false;
+            }
+        }
+        
         ships.add(ship);
         ship.getCells().forEach(c -> grid[c.getX()][c.getY()].setShip(true));
         return true;
     }
 
     public boolean shoot(int x, int y) {
+        if (x < 0 || x >= size || y < 0 || y >= size) {
+            return false;
+        }
+        
         Cell cell = grid[x][y];
+        
+        if (cell.isHit()) {
+            return false;
+        }
+        
         cell.markHit();
         return cell.hasShip();
     }
@@ -35,5 +57,24 @@ public class Board {
             }
         }
         return true;
+    }
+
+    public int getSize() {
+        return size;
+    }
+
+    public Cell[][] getGrid() {
+        return grid;
+    }
+
+    public List<Ship> getShips() {
+        return ships;
+    }
+
+    public Cell getCell(int x, int y) {
+        if (x >= 0 && x < size && y >= 0 && y < size) {
+            return grid[x][y];
+        }
+        return null;
     }
 }
