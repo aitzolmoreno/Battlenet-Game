@@ -14,7 +14,7 @@ function Test() {
             console.error("Error connecting to backend:", err);
             setData("Error connecting to backend");
         });
-}
+    }
 
 
     return (
