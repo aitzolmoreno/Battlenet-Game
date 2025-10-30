@@ -13,6 +13,10 @@ public class Cell {
         this.hasShip = false;
     }
 
+    public void markHit() { 
+        this.hit = true; 
+    }
+
     public int getX() {
         return x;
     }
@@ -33,6 +37,10 @@ public class Cell {
         return hit; 
     }
 
+    public void setHit(boolean hit) {
+        this.hit = hit;
+    }
+
     public boolean hasShip() { 
         return hasShip; 
     }
@@ -41,7 +49,15 @@ public class Cell {
         this.hasShip = hasShip; 
     }
 
-    public void markHit() { 
-        this.hit = true; 
+    public String getState() {
+        if (hit && hasShip) {
+            return "HIT";
+        } else if (hit) {
+            return "MISS";
+        } else if (hasShip) {
+            return "SHIP";
+        } else {
+            return "EMPTY";
+        }
     }
 }
