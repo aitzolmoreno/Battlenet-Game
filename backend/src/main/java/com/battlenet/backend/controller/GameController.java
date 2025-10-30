@@ -87,4 +87,65 @@ public class GameController {
         
         return response;
     }
+
+    @PostMapping("/{gameId}/place-ship")
+    public Map<String, Object> placeShip(
+            @PathVariable String gameId,
+            @RequestBody Map<String, Object> request) {
+        
+        Game game = games.get(gameId);
+        if (game == null) {
+            Map<String, Object> error = new HashMap<>();
+            error.put("success", false);
+            error.put("message", "Game not found");
+            return error;
+        }
+        
+        int playerNum = (Integer) request.get("player");
+        String shipType = (String) request.get("shipType");
+        int x = (Integer) request.get("x");
+        int y = (Integer) request.get("y");
+        boolean horizontal = (Boolean) request.get("horizontal");
+        
+        Player player = playerNum == 1 ? game.getPlayer1() : game.getPlayer2();
+        
+        Ship.ShipType type;
+        try {
+            type = Ship.ShipType.valueOf(shipType);
+        } catch (IllegalArgumentException e) {
+            Map<String, Object> error = new HashMap<>();
+            error.put("success", false);
+            error.put("message", "Invalid ship type: " + shipType);
+            return error;
+        }
+        
+        List<Cell> cells = new ArrayList<>();
+        for (int i = 0; i < type.getSize(); i++) {
+            if (horizontal) {
+                cells.add(new Cell(x, y + i));
+            } else {
+                cells.add(new Cell(x + i, y));
+            }
+        }
+        
+        Ship ship = new Ship(type, cells, horizontal);
+        boolean success = player.placeShip(ship);
+        
+        Map<String, Object> response = new HashMap<>();
+        response.put("success", success);
+        
+        if (success) {
+            response.put("message", "Ship placed successfully");
+            response.put("shipType", type.name());
+            response.put("shipDisplayName", type.getDisplayName());
+            response.put("position", Map.of("x", x, "y", y, "horizontal", horizontal));
+            response.put("shipsPlaced", player.getBoard().getShips().size());
+            response.put("allShipsPlaced", player.allShipsPlaced());
+        } else {
+            response.put("message", "Invalid placement: Position occupied or out of bounds");
+            response.put("reason", "The position is either already occupied by another ship or goes outside the board boundaries");
+        }
+        
+        return response;
+    }
 }
