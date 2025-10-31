@@ -9,41 +9,47 @@ import java.util.*;
 @RequestMapping("/api/game")
 @CrossOrigin(origins = "http://localhost:5173")
 public class GameController {
-    
+    private static final String PLAYER1NAME = "player1";
+    private static final String PLAYER2NAME = "player2";
+    private static final String MESSAGE = "mensaje";
+    private static final String READY = "ready";
+    private static final String SHIPSPLACED = "shipsPlaced";
+    private static final String GAMEID = UUID.randomUUID().toString();
+    private static final String SUCCESS = "success";
     private Map<String, Game> games = new HashMap<>();
     
     @PostMapping("/create")
     public Map<String, Object> createGame() {
-        String gameId = UUID.randomUUID().toString();
-        String player1Name = "player1";
-        String player2Name = "player2";
+        String gameId = GAMEID;
+        String player1Name = PLAYER1NAME;
+        String player2Name = PLAYER2NAME;
         
         Game game = new Game(gameId, player1Name, player2Name);
         games.put(gameId, game);
         
         Map<String, Object> response = new HashMap<>();
-        response.put("gameId", gameId);
-        response.put("message", "Game created successfully");
+        response.put(GAMEID, gameId);
+        response.put(MESSAGE, "Game created successfully");
         
         Map<String, Object> gameInfo = new HashMap<>();
-        gameInfo.put("gameId", game.getGameId());
+        gameInfo.put(GAMEID, game.getGameId());
         gameInfo.put("state", game.getState().toString());
         
         Map<String, Object> player1Info = new HashMap<>();
         player1Info.put("id", game.getPlayer1().getId());
         player1Info.put("name", game.getPlayer1().getName());
-        player1Info.put("ready", game.getPlayer1().isReady());
-        player1Info.put("shipsPlaced", game.getPlayer1().allShipsPlaced());
+        player1Info.put(READY, game.getPlayer1().isReady());
+        player1Info.put(SHIPSPLACED, game.getPlayer1().allShipsPlaced());
         
         Map<String, Object> player2Info = new HashMap<>();
         player2Info.put("id", game.getPlayer2().getId());
         player2Info.put("name", game.getPlayer2().getName());
-        player2Info.put("ready", game.getPlayer2().isReady());
-        player2Info.put("shipsPlaced", game.getPlayer2().allShipsPlaced());
+        player2Info.put(READY, game.getPlayer2().isReady());
+        player2Info.put(SHIPSPLACED, game.getPlayer2().allShipsPlaced());
         
-        gameInfo.put("player1", player1Info);
-        gameInfo.put("player2", player2Info);
-        gameInfo.put("currentTurn", game.isPlayer1Turn() ? "player1" : "player2");
+        gameInfo.put(PLAYER1NAME, player1Info);
+        gameInfo.put(PLAYER2NAME, player2Info);
+        gameInfo.put("currentTurn", game.isPlayer1Turn() ? PLAYER1NAME : PLAYER2NAME);
         gameInfo.put("winner", game.getWinner() != null ? game.getWinner().getName() : null);
         
         response.put("game", gameInfo);
@@ -62,25 +68,25 @@ public class GameController {
         }
         
         Map<String, Object> response = new HashMap<>();
-        response.put("gameId", game.getGameId());
+        response.put(GAMEID, game.getGameId());
         response.put("state", game.getState().toString());
         
         Map<String, Object> player1Info = new HashMap<>();
         player1Info.put("id", game.getPlayer1().getId());
         player1Info.put("name", game.getPlayer1().getName());
-        player1Info.put("ready", game.getPlayer1().isReady());
-        player1Info.put("shipsPlaced", game.getPlayer1().allShipsPlaced());
+        player1Info.put(READY, game.getPlayer1().isReady());
+        player1Info.put(SHIPSPLACED, game.getPlayer1().allShipsPlaced());
         player1Info.put("shipsCount", game.getPlayer1().getBoard().getShips().size());
         
         Map<String, Object> player2Info = new HashMap<>();
         player2Info.put("id", game.getPlayer2().getId());
         player2Info.put("name", game.getPlayer2().getName());
-        player2Info.put("ready", game.getPlayer2().isReady());
-        player2Info.put("shipsPlaced", game.getPlayer2().allShipsPlaced());
+        player2Info.put(READY, game.getPlayer2().isReady());
+        player2Info.put(SHIPSPLACED, game.getPlayer2().allShipsPlaced());
         player2Info.put("shipsCount", game.getPlayer2().getBoard().getShips().size());
         
-        response.put("player1", player1Info);
-        response.put("player2", player2Info);
+        response.put(PLAYER1NAME, player1Info);
+        response.put(PLAYER2NAME    , player2Info);
         response.put("currentTurn", game.isPlayer1Turn() ? game.getPlayer1().getName() : game.getPlayer2().getName());
         response.put("isGameOver", game.isGameOver());
         response.put("winner", game.getWinner() != null ? game.getWinner().getName() : null);
@@ -96,8 +102,8 @@ public class GameController {
         Game game = games.get(gameId);
         if (game == null) {
             Map<String, Object> error = new HashMap<>();
-            error.put("success", false);
-            error.put("message", "Game not found");
+            error.put(SUCCESS, false);
+            error.put(MESSAGE, "Game not found");
             return error;
         }
         
@@ -114,8 +120,8 @@ public class GameController {
             type = Ship.ShipType.valueOf(shipType);
         } catch (IllegalArgumentException e) {
             Map<String, Object> error = new HashMap<>();
-            error.put("success", false);
-            error.put("message", "Invalid ship type: " + shipType);
+            error.put(SUCCESS, false);
+            error.put(MESSAGE, "Invalid ship type: " + shipType);
             return error;
         }
         
@@ -132,17 +138,17 @@ public class GameController {
         boolean success = player.placeShip(ship);
         
         Map<String, Object> response = new HashMap<>();
-        response.put("success", success);
+        response.put(SUCCESS, success);
         
         if (success) {
-            response.put("message", "Ship placed successfully");
+            response.put(MESSAGE, "Ship placed successfully");
             response.put("shipType", type.name());
             response.put("shipDisplayName", type.getDisplayName());
             response.put("position", Map.of("x", x, "y", y, "horizontal", horizontal));
-            response.put("shipsPlaced", player.getBoard().getShips().size());
+            response.put(SHIPSPLACED, player.getBoard().getShips().size());
             response.put("allShipsPlaced", player.allShipsPlaced());
         } else {
-            response.put("message", "Invalid placement: Position occupied or out of bounds");
+            response.put(MESSAGE, "Invalid placement: Position occupied or out of bounds");
             response.put("reason", "The position is either already occupied by another ship or goes outside the board boundaries");
         }
         
