@@ -37,23 +37,23 @@ interface Scene {
 export default function Game(): JSX.Element {
 
     const [boardA, setBoardA] = useState<(string | null)[]>(() => {
-    const loadBoard = window.localStorage.getItem("boardA");
-    return loadBoard ? JSON.parse(loadBoard) : Array(100).fill(null); // tablero 10x10
+        const loadBoard = window.localStorage.getItem("boardA");
+        return loadBoard ? JSON.parse(loadBoard) : Array(100).fill(null); // tablero 10x10
     });
 
     const [boardB, setBoardB] = useState<(string | null)[]>(() => {
-    const loadBoard = window.localStorage.getItem("boardB");
-    return loadBoard ? JSON.parse(loadBoard) : Array(100).fill(null);
+        const loadBoard = window.localStorage.getItem("boardB");
+        return loadBoard ? JSON.parse(loadBoard) : Array(100).fill(null);
     });
 
     const [turn, setTurn] = useState<PlayerA>("A");
 
     function updateBoard(index: number, player: PlayerA, action: string) {
-        if (player !== turn) return; 
+        if (player !== turn) return;
 
         if (action === "attack") {
             const targetBoard = player === "A" ? [...boardB] : [...boardA];
-        targetBoard[index] = "Attck"; //en este caso hemos puesto que haga ataque, pero deberiamos de poner mas cosas
+            targetBoard[index] = "Attck"; //en este caso hemos puesto que haga ataque, pero deberiamos de poner mas cosas
             player === "A" ? setBoardB(targetBoard) : setBoardA(targetBoard);
         }
 
@@ -138,28 +138,28 @@ export default function Game(): JSX.Element {
         }
 
 
-    async function fetchScene(): Promise<void> {
-        try {
-            const response = await fetch("http://localhost:8080/api/game/create", {
-                method: "POST", // <- changed from GET to POST
-                headers: {
-                    "Content-Type": "application/json", // <- set if sending JSON
-                },
-                body: JSON.stringify({ /* any payload you want to send */ })
-            });
+        async function fetchScene(): Promise<void> {
+            try {
+                const response = await fetch("http://localhost:8080/api/game/create", {
+                    method: "POST", // <- changed from GET to POST
+                    headers: {
+                        "Content-Type": "application/json", // <- set if sending JSON
+                    },
+                    body: JSON.stringify({ /* any payload you want to send */ })
+                });
 
-            if (!response.ok) throw new Error(`Error al cargar el JSON: ${response.status}`);
-            const data = await response.json();
-            
-            const normalized = normalizeScene(data);
-            setScene(normalized);
-            window.localStorage.setItem('board', JSON.stringify(normalized));
-            console.log('normalized scene:', normalized);
+                if (!response.ok) throw new Error(`Error al cargar el JSON: ${response.status}`);
+                const data = await response.json();
 
-        } catch (error) {
-            console.error(error);
+                const normalized = normalizeScene(data);
+                setScene(normalized);
+                window.localStorage.setItem('board', JSON.stringify(normalized));
+                console.log('normalized scene:', normalized);
+
+            } catch (error) {
+                console.error(error);
+            }
         }
-    }
         fetchScene();
 
         return () => { mounted = false; };
@@ -173,7 +173,7 @@ export default function Game(): JSX.Element {
     ): Cell | undefined {
         return scene?.[playerKey]?.board?.ships?.[shipIndex]?.cell?.[cellIndex];
     }
-    
+
     // Safe setter example (updates state + localStorage)
     function setCell(
         playerKey: 'player1' | 'player2',
