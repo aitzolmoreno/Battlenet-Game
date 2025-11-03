@@ -21,10 +21,8 @@ public class GameController {
     @PostMapping("/create")
     public Map<String, Object> createGame() {
         String gameId = GAMEID;
-        String player1Name = PLAYER1NAME;
-        String player2Name = PLAYER2NAME;
         
-        Game game = new Game(gameId, player1Name, player2Name);
+        Game game = new Game(gameId, PLAYER1NAME, PLAYER2NAME);
         games.put(gameId, game);
         
         Map<String, Object> response = new HashMap<>();
