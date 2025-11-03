@@ -37,13 +37,30 @@ interface Scene {
 export default function Game(): JSX.Element {
 
     const [boardA, setBoardA] = useState<(string | null)[]>(() => {
-    const loadBoard = window.localStorage.getItem("boardA");
-    return loadBoard ? JSON.parse(loadBoard) : Array(100).fill(null); // tablero 10x10
+    try {
+        const loadBoard = window.localStorage.getItem("boardA");
+        const parsed = loadBoard ? JSON.parse(loadBoard) : null;
+        if (Array.isArray(parsed) && parsed.length === 100) return parsed;
+    } catch (e) {
+        console.warn('Error parsing boardA from localStorage:', e);
+    }
+    const defaultBoardA = Array(100).fill(null); // tablero 10x10
+    // normalizar en localStorage para evitar reutilizar datos antiguos
+    try { window.localStorage.setItem('boardA', JSON.stringify(defaultBoardA)); } catch {}
+    return defaultBoardA;
     });
 
     const [boardB, setBoardB] = useState<(string | null)[]>(() => {
-    const loadBoard = window.localStorage.getItem("boardB");
-    return loadBoard ? JSON.parse(loadBoard) : Array(100).fill(null);
+    try {
+        const loadBoard = window.localStorage.getItem("boardB");
+        const parsed = loadBoard ? JSON.parse(loadBoard) : null;
+        if (Array.isArray(parsed) && parsed.length === 100) return parsed;
+    } catch (e) {
+        console.warn('Error parsing boardB from localStorage:', e);
+    }
+    const defaultBoardB = Array(100).fill(null);
+    try { window.localStorage.setItem('boardB', JSON.stringify(defaultBoardB)); } catch {}
+    return defaultBoardB;
     });
 
     const [turn, setTurn] = useState<PlayerA>("A");
@@ -58,6 +75,19 @@ export default function Game(): JSX.Element {
         }
 
         setTurn(turn === "A" ? "B" : "A");
+    }
+
+    function resetBoards() {
+        const empty = Array(100).fill(null);
+        try {
+            window.localStorage.setItem('boardA', JSON.stringify(empty));
+            window.localStorage.setItem('boardB', JSON.stringify(empty));
+        } catch (e) {
+            console.warn('Could not write localStorage during reset:', e);
+        }
+        setBoardA([...empty]);
+        setBoardB([...empty]);
+        console.log('Boards reset to empty 10x10');
     }
 
 
@@ -96,7 +126,6 @@ export default function Game(): JSX.Element {
     });
 
     useEffect(() => {
-        let mounted = true;
 
         function normalizeScene(data: any): Scene {
             if (!data || !data.game) {
@@ -162,7 +191,7 @@ export default function Game(): JSX.Element {
     }
         fetchScene();
 
-        return () => { mounted = false; };
+        return () => { /* cleanup */ };
     }, [url]);
 
     // Safe getter
@@ -199,7 +228,10 @@ export default function Game(): JSX.Element {
         <main className="p-4">
             <header>
                 <h1 className="text-2xl font-bold">Battlenet Game</h1>
-                <button className="mt-2 px-3 py-1 rounded bg-blue-600 text-white">Attack</button>
+                <div className="header-actions">
+                    <button className="mt-2 mr-2 px-3 py-1 rounded bg-blue-600 text-white">Attack</button>
+                    <button onClick={resetBoards} className="mt-2 px-3 py-1 rounded border">Reset boards</button>
+                </div>
 
                 <section className="mt-4 grid gap-2">
                     {scene?.player1?.board?.ships?.length ? (
@@ -238,8 +270,33 @@ export default function Game(): JSX.Element {
                 </section>
             </header>
             <section className="game">
-                <Board player="A" board={boardA} updateBoard={updateBoard} />
-                <Board player="B" board={boardB} updateBoard={updateBoard} />
+                <div className="boards-grid">
+                    <div className="player-column">
+                        <h2 className="player-title">Player A</h2>
+                        <div className="board-wrapper">
+                            <div className="board-label">A - Defensa</div>
+                            <Board player="A" board={boardA} updateBoard={updateBoard} revealShips={true} />
+                        </div>
+
+                        <div className="board-wrapper">
+                            <div className="board-label">A - Ataque</div>
+                            <Board player="A" board={boardB} updateBoard={updateBoard} isAttackView={true} />
+                        </div>
+                    </div>
+
+                    <div className="player-column">
+                        <h2 className="player-title">Player B</h2>
+                        <div className="board-wrapper">
+                            <div className="board-label">B - Defensa</div>
+                            <Board player="B" board={boardB} updateBoard={updateBoard} revealShips={true} />
+                        </div>
+
+                        <div className="board-wrapper">
+                            <div className="board-label">B - Ataque</div>
+                            <Board player="B" board={boardA} updateBoard={updateBoard} isAttackView={true} />
+                        </div>
+                    </div>
+                </div>
             </section>
         </main>
     );
