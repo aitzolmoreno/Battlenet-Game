@@ -14,7 +14,7 @@ public class GameController {
     private static final String MESSAGE = "mensaje";
     private static final String READY = "ready";
     private static final String SHIPSPLACED = "shipsPlaced";
-    private static final String GAMEID = UUID.randomUUID().toString();
+    private static final String GAMEID = UUID.randomUUID().toString().substring(0, 6);
     private static final String SUCCESS = "success";
     private Map<String, Game> games = new HashMap<>();
     
@@ -152,6 +152,68 @@ public class GameController {
             response.put("reason", "The position is either already occupied by another ship or goes outside the board boundaries");
         }
         
+        return response;
+    }
+
+    @PostMapping("/{gameId}/start")
+    public Map<String, Object> startGame(@PathVariable String gameId) {
+        Game game = games.get(gameId);
+        Map<String, Object> response = new HashMap<>();
+        if (game == null) {
+            response.put("success", false);
+            response.put("message", "Game not found");
+            return response;
+        }
+
+        boolean player1Ready = game.getPlayer1().allShipsPlaced();
+        boolean player2Ready = game.getPlayer2().allShipsPlaced();
+        if (!player1Ready || !player2Ready) {
+            response.put("success", false);
+            response.put("message", "Both players must place all ships before starting the game");
+            response.put("player1Ready", player1Ready);
+            response.put("player2Ready", player2Ready);
+            return response;
+        }
+
+        game.startGame();
+        response.put("success", true);
+        response.put("message", "Game started!");
+        response.put("state", game.getState().toString());
+        response.put("currentTurn", game.isPlayer1Turn() ? PLAYER1NAME : PLAYER2NAME);
+        return response;
+    }
+
+    @PostMapping("/{gameId}/shoot")
+    public Map<String, Object> shoot(
+            @PathVariable String gameId,
+            @RequestBody Map<String, Object> request) {
+
+        Game game = games.get(gameId);
+        Map<String, Object> response = new HashMap<>();
+        if (game == null) {
+            response.put("success", false);
+            response.put("message", "Game not found");
+            return response;
+        }
+
+        if (game.getState() != Game.GameState.PLAYING) {
+            response.put("success", false);
+            response.put("message", "Game is not in PLAYING state");
+            return response;
+        }
+
+        int x = (Integer) request.get("x");
+        int y = (Integer) request.get("y");
+
+        String result = game.shoot(x, y);
+
+        response.put("success", true);
+        response.put("result", result);
+        response.put("currentTurn", game.isPlayer1Turn() ? PLAYER1NAME : PLAYER2NAME);
+        response.put("isGameOver", game.isGameOver());
+        if (game.getWinner() != null) {
+            response.put("winner", game.getWinner().getName());
+        }
         return response;
     }
 }
