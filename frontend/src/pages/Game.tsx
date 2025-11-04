@@ -65,6 +65,19 @@ export default function Game(): JSX.Element {
 
     const [turn, setTurn] = useState<PlayerA>("A");
 
+    // Ships catalog (standard Battleship sizes)
+    const shipsCatalog = [
+        { id: 'carrier', name: 'Carrier', length: 5 },
+        { id: 'battleship', name: 'Battleship', length: 4 },
+        { id: 'cruiser', name: 'Cruiser', length: 3 },
+        { id: 'submarine', name: 'Submarine', length: 3 },
+        { id: 'destroyer', name: 'Destroyer', length: 2 },
+    ];
+
+    // Track placed ships for player A (simple map: shipId -> positions[])
+    const [placedShipsA, setPlacedShipsA] = useState<Record<string, number[]>>({});
+    const [selectedShip, setSelectedShip] = useState<{id: string; name: string; length: number} | null>(null);
+
     function updateBoard(index: number, player: PlayerA, action: string) {
         if (player !== turn) return;
 
@@ -88,6 +101,57 @@ export default function Game(): JSX.Element {
         setBoardA([...empty]);
         setBoardB([...empty]);
         console.log('Boards reset to empty 10x10');
+    }
+
+    function selectShipToPlace(shipId: string, name: string, length: number) {
+        // toggle selection
+        if (selectedShip?.id === shipId) {
+            setSelectedShip(null);
+            return;
+        }
+        // don't allow re-selecting an already placed ship
+        if (placedShipsA[shipId]) {
+            console.warn('Ship already placed:', shipId);
+            return;
+        }
+        setSelectedShip({ id: shipId, name, length });
+    }
+
+    function placeShip(index: number, player: PlayerA, shipId: string, length: number) {
+        // only allow placing on player A's defense board in this simple UI
+        if (player !== 'A') return;
+        if (!selectedShip || selectedShip.id !== shipId) {
+            console.warn('No ship selected or mismatch');
+            return;
+        }
+
+        const row = Math.floor(index / 10);
+        const col = index % 10;
+        if (col + length > 10) {
+            console.warn('Ship does not fit horizontally from this position');
+            return;
+        }
+
+        // check overlap
+        for (let i = 0; i < length; i++) {
+            if (boardA[index + i] !== null) {
+                console.warn('Cannot place ship: overlap at', index + i);
+                return;
+            }
+        }
+
+        const next = [...boardA];
+        const positions: number[] = [];
+        for (let i = 0; i < length; i++) {
+            next[index + i] = `ship:${shipId}`;
+            positions.push(index + i);
+        }
+
+        try { window.localStorage.setItem('boardA', JSON.stringify(next)); } catch {}
+        setBoardA(next);
+        setPlacedShipsA(prev => ({ ...prev, [shipId]: positions }));
+        setSelectedShip(null);
+        console.log(`Placed ${shipId} at`, positions);
     }
 
 
@@ -233,41 +297,27 @@ export default function Game(): JSX.Element {
                     <button onClick={resetBoards} className="mt-2 px-3 py-1 rounded border">Reset boards</button>
                 </div>
 
-                <section className="mt-4 grid gap-2">
-                    {scene?.player1?.board?.ships?.length ? (
-                        scene.player1.board.ships.map((ship: Ship, idx: number) => (
-                            <article key={ship.id ?? idx} className="p-2 border rounded">
-                                <strong>{ship.name ?? `Ship ${idx}`}</strong>
-                                <div>Cells: {Array.isArray(ship.cell) ? ship.cell.join(', ') : '—'}</div>
-                            </article>
-                        ))
-                    ) : (
-                        <p>Loading or no ships...</p>
-                    )}
-
-                    <div className="mt-4">
-                        <p>
-                            Ejemplo: <code>scene.player1.board.ships[0].cell[0]</code> =&nbsp;
-                            <strong>{String(exampleCell)}</strong>
-                        </p>
-
-                        <div className="mt-2">
-                            <button
-                                className="mr-2 px-3 py-1 rounded border"
-                                onClick={() => console.log('Valor celda ejemplo:', getCell('player1', 0, 0))}
-                            >
-                                Log cell[0] of ship 0
-                            </button>
-
-                            <button
-                                className="px-3 py-1 rounded border"
-                                onClick={() => setCell('player1', 0, 0, '1000')}
-                            >
-                                Set example cell to 'X'
-                            </button>
-                        </div>
+                <div className="ships-setup mt-4">
+                    <h3 className="mb-2">Ships to place (Player A)</h3>
+                    <div className="ships-list flex gap-2">
+                        {shipsCatalog.map(s => (
+                            <div key={s.id} className="p-2 border rounded">
+                                <div><strong>{s.name}</strong> ({s.length})</div>
+                                <div className="mt-1">
+                                    {placedShipsA[s.id] ? (
+                                        <span className="text-sm text-green-600">Placed</span>
+                                    ) : (
+                                        <button className="px-2 py-1 rounded border" onClick={() => selectShipToPlace(s.id, s.name, s.length)}>
+                                            {selectedShip?.id === s.id ? 'Selected' : 'Select'}
+                                        </button>
+                                    )}
+                                </div>
+                            </div>
+                        ))}
                     </div>
-                </section>
+                </div>
+
+                
             </header>
             <section className="game">
                 <div className="boards-grid">
@@ -275,7 +325,16 @@ export default function Game(): JSX.Element {
                         <h2 className="player-title">Player A</h2>
                         <div className="board-wrapper">
                             <div className="board-label">A - Defensa</div>
-                            <Board player="A" board={boardA} updateBoard={updateBoard} revealShips={true} />
+                            <Board
+                                player="A"
+                                board={boardA}
+                                updateBoard={updateBoard}
+                                revealShips={true}
+                                isPlacementMode={!!selectedShip}
+                                placingShipId={selectedShip?.id ?? null}
+                                placingShipLength={selectedShip?.length ?? 0}
+                                onPlaceShip={placeShip}
+                            />
                         </div>
 
                         <div className="board-wrapper">
@@ -287,8 +346,17 @@ export default function Game(): JSX.Element {
                     <div className="player-column">
                         <h2 className="player-title">Player B</h2>
                         <div className="board-wrapper">
-                            <div className="board-label">B - Defensa</div>
-                            <Board player="B" board={boardB} updateBoard={updateBoard} revealShips={true} />
+                            <div className="board-label">A - Defensa</div>
+                            <Board
+                                player="B"
+                                board={boardB}
+                                updateBoard={updateBoard}
+                                revealShips={true}
+                                isPlacementMode={!!selectedShip}
+                                placingShipId={selectedShip?.id ?? null}
+                                placingShipLength={selectedShip?.length ?? 0}
+                                onPlaceShip={placeShip}
+                            />
                         </div>
 
                         <div className="board-wrapper">

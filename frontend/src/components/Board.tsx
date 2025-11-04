@@ -10,9 +10,14 @@ interface BoardProps {
     isAttackView?: boolean;
     /** Si true se muestran los barcos/valores tal cual (vista propia/defensa) */
     revealShips?: boolean;
+    /** Props para colocar barcos: si se proporciona, las celdas llaman a onPlaceShip en vez de updateBoard */
+    isPlacementMode?: boolean;
+    placingShipId?: string | null;
+    placingShipLength?: number;
+    onPlaceShip?: (index: number, player: Player, shipId: string, length: number) => void;
 }
 
-const Board: React.FC<BoardProps> = ({ player, board, updateBoard, isAttackView = false, revealShips = false }) => {
+const Board: React.FC<BoardProps> = ({ player, board, updateBoard, isAttackView = false, revealShips = false, isPlacementMode = false, placingShipId = null, placingShipLength = 0, onPlaceShip }) => {
     return (
     <div className="board">
         {board.map((cell, index) => (
@@ -24,6 +29,10 @@ const Board: React.FC<BoardProps> = ({ player, board, updateBoard, isAttackView 
             updateBoard={updateBoard}
             isAttackView={isAttackView}
             revealShips={revealShips}
+            isPlacementMode={isPlacementMode}
+            placingShipId={placingShipId}
+            placingShipLength={placingShipLength}
+            onPlaceShip={onPlaceShip}
         >
             {cell}
         </Cell>
