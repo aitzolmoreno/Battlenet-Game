@@ -7,16 +7,12 @@ interface CellProps {
     value: string | null;
     updateBoard: (index: number, player: Player, action: string) => void;
     children?: React.ReactNode;
-}
-
-interface CellProps {
-    index: number;
-    player: Player;
-    value: string | null;
-    updateBoard: (index: number, player: Player, action: string) => void;
-    children?: React.ReactNode;
     isAttackView?: boolean;
     revealShips?: boolean;
+    isPlacementMode?: boolean;
+    placingShipId?: string | null;
+    placingShipLength?: number;
+    onPlaceShip?: (index: number, player: Player, shipId: string, length: number) => void;
 }
 
 const Cell: React.FC<CellProps> = ({
@@ -27,15 +23,28 @@ const Cell: React.FC<CellProps> = ({
     children,
     isAttackView = false,
     revealShips = false,
+    isPlacementMode = false,
+    placingShipId = null,
+    placingShipLength = 0,
+    onPlaceShip,
 }) => {
 function handleClick() {
+    // If we are in placement mode and a ship is selected, call onPlaceShip
+    if (isPlacementMode && placingShipId && onPlaceShip) {
+        onPlaceShip(index, player, placingShipId, placingShipLength ?? 0);
+        return;
+    }
+
     const action = "attack"; 
     updateBoard(index, player, action);
 }
 
 function renderContent() {
     // defense view: show actual content (ships/marks)
-    if (revealShips) return children;
+    if (revealShips) {
+        if (typeof value === 'string' && value.startsWith('ship:')) return '🚢';
+        return children;
+    }
 
     // attack view: only show known hits/attacks
     if (isAttackView) {
