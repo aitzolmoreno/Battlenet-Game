@@ -11,26 +11,26 @@ import java.util.*;
 public class GameController {
     private static final String PLAYER1NAME = "player1";
     private static final String PLAYER2NAME = "player2";
-    private static final String MESSAGE = "mensaje";
+    private static final String MESSAGE = "message";
     private static final String READY = "ready";
     private static final String SHIPSPLACED = "shipsPlaced";
-    private static final String GAMEID = UUID.randomUUID().toString().substring(0, 6);
+    private static final String GAMEID_KEY = "gameId";
     private static final String SUCCESS = "success";
     private Map<String, Game> games = new HashMap<>();
     
     @PostMapping("/create")
     public Map<String, Object> createGame() {
-        String gameId = GAMEID;
+        String gameId = UUID.randomUUID().toString().substring(0, 6);
         
         Game game = new Game(gameId, PLAYER1NAME, PLAYER2NAME);
         games.put(gameId, game);
         
         Map<String, Object> response = new HashMap<>();
-        response.put(GAMEID, gameId);
+        response.put(GAMEID_KEY, gameId);
         response.put(MESSAGE, "Game created successfully");
         
         Map<String, Object> gameInfo = new HashMap<>();
-        gameInfo.put(GAMEID, game.getGameId());
+        gameInfo.put(GAMEID_KEY, game.getGameId());
         gameInfo.put("state", game.getState().toString());
         
         Map<String, Object> player1Info = new HashMap<>();
@@ -66,7 +66,7 @@ public class GameController {
         }
         
         Map<String, Object> response = new HashMap<>();
-        response.put(GAMEID, game.getGameId());
+        response.put(GAMEID_KEY, game.getGameId());
         response.put("state", game.getState().toString());
         
         Map<String, Object> player1Info = new HashMap<>();
