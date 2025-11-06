@@ -1,10 +1,6 @@
-package com.battlenet.backend;
+package com.battlenet.backend.model;
 
 import org.junit.jupiter.api.Test;
-
-import com.battlenet.backend.model.Cell;
-import com.battlenet.backend.model.Player;
-import com.battlenet.backend.model.Ship;
 
 import java.util.List;
 

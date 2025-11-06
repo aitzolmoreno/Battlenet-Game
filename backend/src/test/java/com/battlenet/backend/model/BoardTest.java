@@ -1,11 +1,7 @@
-package com.battlenet.backend;
+package com.battlenet.backend.model;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-
-import com.battlenet.backend.model.Board;
-import com.battlenet.backend.model.Cell;
-import com.battlenet.backend.model.Ship;
 
 import java.util.Arrays;
 import java.util.List;

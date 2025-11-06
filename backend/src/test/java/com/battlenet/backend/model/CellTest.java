@@ -1,8 +1,6 @@
-package com.battlenet.backend;
+package com.battlenet.backend.model;
 
 import org.junit.jupiter.api.Test;
-
-import com.battlenet.backend.model.Cell;
 
 import static org.junit.jupiter.api.Assertions.*;
 

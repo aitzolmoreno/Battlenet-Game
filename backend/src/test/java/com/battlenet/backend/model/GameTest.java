@@ -1,12 +1,7 @@
-package com.battlenet.backend;
+package com.battlenet.backend.model;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-
-import com.battlenet.backend.model.Cell;
-import com.battlenet.backend.model.Game;
-import com.battlenet.backend.model.Player;
-import com.battlenet.backend.model.Ship;
 
 import java.util.List;
 
@@ -59,7 +54,7 @@ class GameTest {
         assertTrue(result.startsWith("Hit"));
         assertTrue(result.contains("Game Over"));
         assertTrue(game.isGameOver());
-        assertEquals("Alice", game.getWinner().getName());
+        assertEquals("Aitzol", game.getWinner().getName());
     }
 
     @Test
