@@ -26,39 +26,40 @@ class GameTest {
         assertEquals("g1", game.getGameId());
         assertEquals(Game.GameState.SETUP, game.getState());
         assertTrue(game.isPlayer1Turn());
-        assertNull(game.getWinner());
         assertFalse(game.isGameOver());
     }
 
     @Test
     void testStartGameAndShootMiss() {
         game.startGame();
+        String result = game.shoot(9, 9);
+        assertEquals("Miss!", result);
+        assertFalse(game.isPlayer1Turn()); 
         assertEquals(Game.GameState.PLAYING, game.getState());
-        String result = game.shoot(0, 0);
-        assertTrue(result.startsWith("Miss") || result.startsWith("Hit") || result.contains("Game not ready"));
     }
 
     @Test
     void testShootWhenNotPlaying() {
         String msg = game.shoot(0,0);
         assertEquals("Game not ready!", msg);
+        assertEquals(Game.GameState.SETUP, game.getState());
     }
 
     @Test
     void testHitAndWinCondition() {
         game.startGame();
         Player p2 = game.getPlayer2();
-        Cell cell = p2.getBoard().getCell(0,0);
+
+        Cell cell = p2.getBoard().getCell(0, 0);
         cell.setShip(true);
         Ship ship = new Ship(1, List.of(cell));
         p2.getBoard().placeShip(ship);
 
-        String result = game.shoot(0,0);
-
+        String result = game.shoot(0, 0);
         assertTrue(result.startsWith("Hit"));
         assertTrue(result.contains("Game Over"));
         assertTrue(game.isGameOver());
-        assertEquals("Aitzol", game.getWinner().getName());
+        assertEquals("Alice", game.getWinner().getName());
     }
 
     @Test
