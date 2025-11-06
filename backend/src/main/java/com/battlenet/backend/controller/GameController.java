@@ -16,6 +16,10 @@ public class GameController {
     private static final String SHIPSPLACED = "shipsPlaced";
     private static final String GAMEID_KEY = "gameId";
     private static final String SUCCESS = "success";
+    private static final String STATE = "state";
+    private static final String CURRENT_TURN = "currentTurn";
+    private static final String WINNER = "winner";
+    private static final String GAME_NOT_FOUND = "Game not found";
     private Map<String, Game> games = new HashMap<>();
     
     @PostMapping("/create")
@@ -31,7 +35,7 @@ public class GameController {
         
         Map<String, Object> gameInfo = new HashMap<>();
         gameInfo.put(GAMEID_KEY, game.getGameId());
-        gameInfo.put("state", game.getState().toString());
+        gameInfo.put(STATE, game.getState().toString());
         
         Map<String, Object> player1Info = new HashMap<>();
         player1Info.put("id", game.getPlayer1().getId());
@@ -47,8 +51,8 @@ public class GameController {
         
         gameInfo.put(PLAYER1NAME, player1Info);
         gameInfo.put(PLAYER2NAME, player2Info);
-        gameInfo.put("currentTurn", game.isPlayer1Turn() ? PLAYER1NAME : PLAYER2NAME);
-        gameInfo.put("winner", game.getWinner() != null ? game.getWinner().getName() : null);
+        gameInfo.put(CURRENT_TURN, game.isPlayer1Turn() ? PLAYER1NAME : PLAYER2NAME);
+        gameInfo.put(WINNER, game.getWinner() != null ? game.getWinner().getName() : null);
         
         response.put("game", gameInfo);
         
@@ -61,13 +65,13 @@ public class GameController {
 
         if (game == null) {
             Map<String, Object> error = new HashMap<>();
-            error.put("error", "Game not found");
+            error.put("error", GAME_NOT_FOUND);
             return error;
         }
         
         Map<String, Object> response = new HashMap<>();
         response.put(GAMEID_KEY, game.getGameId());
-        response.put("state", game.getState().toString());
+        response.put(STATE, game.getState().toString());
         
         Map<String, Object> player1Info = new HashMap<>();
         player1Info.put("id", game.getPlayer1().getId());
@@ -85,9 +89,9 @@ public class GameController {
         
         response.put(PLAYER1NAME, player1Info);
         response.put(PLAYER2NAME    , player2Info);
-        response.put("currentTurn", game.isPlayer1Turn() ? game.getPlayer1().getName() : game.getPlayer2().getName());
+        response.put(CURRENT_TURN, game.isPlayer1Turn() ? game.getPlayer1().getName() : game.getPlayer2().getName());
         response.put("isGameOver", game.isGameOver());
-        response.put("winner", game.getWinner() != null ? game.getWinner().getName() : null);
+        response.put(WINNER, game.getWinner() != null ? game.getWinner().getName() : null);
         
         return response;
     }
@@ -101,7 +105,7 @@ public class GameController {
         if (game == null) {
             Map<String, Object> error = new HashMap<>();
             error.put(SUCCESS, false);
-            error.put(MESSAGE, "Game not found");
+            error.put(MESSAGE, GAME_NOT_FOUND);
             return error;
         }
         
@@ -158,26 +162,26 @@ public class GameController {
         Game game = games.get(gameId);
         Map<String, Object> response = new HashMap<>();
         if (game == null) {
-            response.put("success", false);
-            response.put("message", "Game not found");
+            response.put(SUCCESS, false);
+            response.put(MESSAGE, GAME_NOT_FOUND);
             return response;
         }
 
         boolean player1Ready = game.getPlayer1().allShipsPlaced();
         boolean player2Ready = game.getPlayer2().allShipsPlaced();
         if (!player1Ready || !player2Ready) {
-            response.put("success", false);
-            response.put("message", "Both players must place all ships before starting the game");
+            response.put(SUCCESS, false);
+            response.put(MESSAGE, "Both players must place all ships before starting the game");
             response.put("player1Ready", player1Ready);
             response.put("player2Ready", player2Ready);
             return response;
         }
 
         game.startGame();
-        response.put("success", true);
-        response.put("message", "Game started!");
-        response.put("state", game.getState().toString());
-        response.put("currentTurn", game.isPlayer1Turn() ? PLAYER1NAME : PLAYER2NAME);
+        response.put(SUCCESS, true);
+        response.put(MESSAGE, "Game started!");
+        response.put(STATE, game.getState().toString());
+        response.put(CURRENT_TURN, game.isPlayer1Turn() ? PLAYER1NAME : PLAYER2NAME);
         return response;
     }
 
@@ -189,14 +193,14 @@ public class GameController {
         Game game = games.get(gameId);
         Map<String, Object> response = new HashMap<>();
         if (game == null) {
-            response.put("success", false);
-            response.put("message", "Game not found");
+            response.put(SUCCESS, false);
+            response.put(MESSAGE, GAME_NOT_FOUND);
             return response;
         }
 
         if (game.getState() != Game.GameState.PLAYING) {
-            response.put("success", false);
-            response.put("message", "Game is not in PLAYING state");
+            response.put(SUCCESS, false);
+            response.put(MESSAGE, "Game is not in PLAYING state");
             return response;
         }
 
@@ -205,12 +209,12 @@ public class GameController {
 
         String result = game.shoot(x, y);
 
-        response.put("success", true);
+        response.put(SUCCESS, true);
         response.put("result", result);
-        response.put("currentTurn", game.isPlayer1Turn() ? PLAYER1NAME : PLAYER2NAME);
+        response.put(CURRENT_TURN, game.isPlayer1Turn() ? PLAYER1NAME : PLAYER2NAME);
         response.put("isGameOver", game.isGameOver());
         if (game.getWinner() != null) {
-            response.put("winner", game.getWinner().getName());
+            response.put(WINNER, game.getWinner().getName());
         }
         return response;
     }
