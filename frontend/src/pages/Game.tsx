@@ -1,6 +1,6 @@
 import React, { useEffect, useState, type JSX } from 'react';
 import Board from '../components/Board';
-import '/src/design/Game.css';
+import './Game.css';
 
 export type PlayerA = "A" | "B";
 
