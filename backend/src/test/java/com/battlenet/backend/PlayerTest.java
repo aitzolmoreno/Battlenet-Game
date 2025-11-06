@@ -6,12 +6,11 @@ import com.battlenet.backend.model.Cell;
 import com.battlenet.backend.model.Player;
 import com.battlenet.backend.model.Ship;
 
-import java.util.Arrays;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-public class PlayerTest {
+class PlayerTest {
 
     @Test
     void testPlayerConstructorAndGetters() {
