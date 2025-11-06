@@ -1,5 +1,6 @@
 import React, { useEffect, useState, type JSX } from 'react';
 import Board from '../components/Board';
+import '/src/design/Game.css';
 
 export type PlayerA = "A" | "B";
 
@@ -65,7 +66,7 @@ export default function Game(): JSX.Element {
 
     const [turn, setTurn] = useState<PlayerA>("A");
 
-    // Ships catalog (standard Battleship sizes)
+    // lista de barcos
     const shipsCatalog = [
         { id: 'carrier', name: 'Carrier', length: 5 },
         { id: 'battleship', name: 'Battleship', length: 4 },

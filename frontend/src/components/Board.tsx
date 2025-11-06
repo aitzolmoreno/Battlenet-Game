@@ -6,11 +6,11 @@ interface BoardProps {
     player: Player;
     board: (string | null)[];
     updateBoard: (index: number, player: Player, action: string) => void;
-    /** Si true se renderiza como vista de ataque (solo mostrar hits/misses) */
+    // Si true se renderiza como vista de ataque (solo mostrar hits/misses) 
     isAttackView?: boolean;
-    /** Si true se muestran los barcos/valores tal cual (vista propia/defensa) */
+    // Si true se muestran los barcos/valores tal cual (vista propia/defensa) 
     revealShips?: boolean;
-    /** Props para colocar barcos: si se proporciona, las celdas llaman a onPlaceShip en vez de updateBoard */
+    // Props para colocar barcos: si se proporciona, las celdas llaman a onPlaceShip en vez de updateBoard 
     isPlacementMode?: boolean;
     placingShipId?: string | null;
     placingShipLength?: number;
