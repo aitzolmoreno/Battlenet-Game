@@ -287,7 +287,6 @@ export default function Game(): JSX.Element {
         });
     }
 
-    const exampleCell = getCell('player1', 0, 0);
 
     return (
         <main className="p-4">
