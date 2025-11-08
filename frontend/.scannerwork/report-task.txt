@@ -2,5 +2,5 @@ projectKey=battlenet-frontend
 serverUrl=http://localhost:9000
 serverVersion=25.9.0.112764
 dashboardUrl=http://localhost:9000/dashboard?id=battlenet-frontend
-ceTaskId=f362adc2-201d-4df8-9ca0-c450ca83a690
-ceTaskUrl=http://localhost:9000/api/ce/task?id=f362adc2-201d-4df8-9ca0-c450ca83a690
+ceTaskId=35019a70-3513-4111-b302-f8859cc62cd6
+ceTaskUrl=http://localhost:9000/api/ce/task?id=35019a70-3513-4111-b302-f8859cc62cd6
