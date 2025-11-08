@@ -59,9 +59,9 @@ function renderContent() {
 }
 
 return (
-    <div className="cell" onClick={handleClick}>
+    <button className="cell" onClick={handleClick}>
         {renderContent()}
-    </div>
+    </button>
 );
 };
 

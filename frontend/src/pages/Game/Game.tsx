@@ -1,5 +1,5 @@
 import React, { useEffect, useState, type JSX } from 'react';
-import Board from '../components/Board';
+import Board from '../../components/Board';
 import './Game.css';
 
 export type PlayerA = "A" | "B";
@@ -126,7 +126,6 @@ export default function Game(): JSX.Element {
             return;
         }
 
-        const row = Math.floor(index / 10);
         const col = index % 10;
         if (col + length > 10) {
             console.warn('Ship does not fit horizontally from this position');

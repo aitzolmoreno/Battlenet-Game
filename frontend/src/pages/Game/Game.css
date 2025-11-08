@@ -1,0 +1,93 @@
+:root{
+    --ships-bg: #414653; /* suave */
+    --ships-border: #e2e8f0; /* gris claro */
+    --accent: #2563eb; /* azul */
+    --accent-2: #16a34a; /* verde */
+    --muted: #6b7280; /* texto secundario */
+}
+
+/* contenedor general para el setup de barcos */
+.ships-setup{
+    background: linear-gradient(180deg, rgba(37,99,235,0.03), rgba(16,185,129,0.01));
+    border: 1px solid var(--ships-border);
+    padding: 1rem;
+    border-radius: 8px;
+    box-shadow: 0 6px 18px rgba(2,6,23,0.04);
+    max-width: 100%;
+}
+
+.ships-setup h3{
+    margin: 0 0 0.5rem 0;
+    font-size: 1rem;
+    color: #edf2ff;
+}
+
+.ships-list{
+    display:flex;
+    gap:0.5rem;
+    flex-wrap:wrap;
+    align-items:flex-start;
+}
+
+.ships-list > div{
+    min-width:140px;
+    background: var(--ships-bg);
+    border: 1px solid var(--ships-border);
+    padding:0.5rem 0.75rem;
+    border-radius:6px;
+    display:flex;
+    flex-direction:column;
+    justify-content:space-between;
+    transition: transform 120ms ease, box-shadow 120ms ease;
+}
+
+.ships-list > div:hover{
+    transform: translateY(-4px);
+    box-shadow: 0 8px 20px rgba(2,6,23,0.06);
+}
+
+.ships-list .text-small{
+    font-size:0.85rem;
+    color:var(--muted);
+}
+
+/* estado placed */
+.ships-list .text-green,
+.ships-list .text-success,
+.ships-list .placed{
+    color: var(--accent-2);
+    font-weight:600;
+}
+
+/* botones dentro de las tarjetas */
+.ships-list button{
+    background:transparent;
+    border:1px solid var(--ships-border);
+    padding:0.35rem 0.6rem;
+    border-radius:6px;
+    cursor:pointer;
+    font-size:0.9rem;
+}
+
+.ships-list button:hover{
+    border-color: rgba(37,99,235,0.9);
+    color: rgba(37,99,235,0.95);
+    box-shadow: 0 6px 14px rgba(37,99,235,0.08);
+}
+
+/* botón para 'Selected' */
+.ships-list button.selected{
+    background: linear-gradient(90deg, rgba(37,99,235,0.12), rgba(37,99,235,0.06));
+    border-color: var(--accent);
+    color:var(--accent);
+    font-weight:600;
+}
+
+/* pequeño helper para etiquetas/labels */
+.board-label{
+    font-size:0.9rem;
+    color:var(--muted);
+    margin-bottom:0.4rem;
+}
+
+

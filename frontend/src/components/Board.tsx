@@ -17,27 +17,41 @@ interface BoardProps {
     onPlaceShip?: (index: number, player: Player, shipId: string, length: number) => void;
 }
 
-const Board: React.FC<BoardProps> = ({ player, board, updateBoard, isAttackView = false, revealShips = false, isPlacementMode = false, placingShipId = null, placingShipLength = 0, onPlaceShip }) => {
+const Board: React.FC<BoardProps> = ({
+    player,
+    board,
+    updateBoard,
+    isAttackView = false,
+    revealShips = false,
+    isPlacementMode = false,
+    placingShipId = null,
+    placingShipLength = 0,
+    onPlaceShip
+}) => {
     return (
-    <div className="board">
-        {board.map((cell, index) => (
-        <Cell
-            key={index}
-            index={index}
-            player={player}
-            value={cell}
-            updateBoard={updateBoard}
-            isAttackView={isAttackView}
-            revealShips={revealShips}
-            isPlacementMode={isPlacementMode}
-            placingShipId={placingShipId}
-            placingShipLength={placingShipLength}
-            onPlaceShip={onPlaceShip}
-        >
-            {cell}
-        </Cell>
-        ))}
-    </div>
+        <div className="board">
+            {board.map((cell, index) => {
+                // Generate a stable key based on index and cell value
+                const key = `${index}-${cell ?? "empty"}`;
+                return (
+                    <Cell
+                        key={key}
+                        index={index}
+                        player={player}
+                        value={cell}
+                        updateBoard={updateBoard}
+                        isAttackView={isAttackView}
+                        revealShips={revealShips}
+                        isPlacementMode={isPlacementMode}
+                        placingShipId={placingShipId}
+                        placingShipLength={placingShipLength}
+                        onPlaceShip={onPlaceShip}
+                    >
+                        {cell}
+                    </Cell>
+                );
+            })}
+        </div>
     );
 };
 

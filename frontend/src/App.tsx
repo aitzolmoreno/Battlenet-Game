@@ -1,7 +1,8 @@
 import { BrowserRouter, Link, Route, Routes } from 'react-router-dom'
 import './App.css'
-import Test from './pages/Test'
-import Game from './pages/Game'
+import Home from './pages/Home/Home'
+import Test from './pages/ConnectivityTest'
+import Game from './pages/Game/Game'
 
 function App() {
   return (
@@ -14,7 +15,7 @@ function App() {
           <Link to="/game">Game</Link>
         </div>
         <Routes>
-          <Route path="/"/>
+          <Route path="/" element={<Home />}/>
           <Route path="/test" element={<Test />} />
           <Route path="/game" element={<Game />} />
 
