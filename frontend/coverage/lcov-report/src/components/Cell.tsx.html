@@ -23,16 +23,16 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">66.66% </span>
+                <span class="strong">55% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>10/15</span>
+                <span class='fraction'>11/20</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">58.33% </span>
+                <span class="strong">34.61% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>7/12</span>
+                <span class='fraction'>9/26</span>
             </div>
         
             
@@ -44,9 +44,9 @@
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">75% </span>
+                <span class="strong">64.7% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>9/12</span>
+                <span class='fraction'>11/17</span>
             </div>
         
             
@@ -122,11 +122,16 @@
 <a name='L57'></a><a href='#L57'>57</a>
 <a name='L58'></a><a href='#L58'>58</a>
 <a name='L59'></a><a href='#L59'>59</a>
-<a name='L60'></a><a href='#L60'>60</a></td><td class="line-coverage quiet"><span class="cline-any cline-yes">2x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L60'></a><a href='#L60'>60</a>
+<a name='L61'></a><a href='#L61'>61</a>
+<a name='L62'></a><a href='#L62'>62</a>
+<a name='L63'></a><a href='#L63'>63</a>
+<a name='L64'></a><a href='#L64'>64</a>
+<a name='L65'></a><a href='#L65'>65</a>
+<a name='L66'></a><a href='#L66'>66</a>
+<a name='L67'></a><a href='#L67'>67</a>
+<a name='L68'></a><a href='#L68'>68</a>
+<a name='L69'></a><a href='#L69'>69</a></td><td class="line-coverage quiet"><span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -153,6 +158,16 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -160,6 +175,9 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">4800x</span>
+<span class="cline-any cline-yes">2400x</span>
+<span class="cline-any cline-yes">2400x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">2400x</span>
@@ -190,16 +208,12 @@ interface CellProps {
     value: string | null;
     updateBoard: (index: number, player: Player, action: string) =&gt; void;
     children?: React.ReactNode;
-}
-&nbsp;
-interface CellProps {
-    index: number;
-    player: Player;
-    value: string | null;
-    updateBoard: (index: number, player: Player, action: string) =&gt; void;
-    children?: React.ReactNode;
     isAttackView?: boolean;
     revealShips?: boolean;
+    isPlacementMode?: boolean;
+    placingShipId?: string | null;
+    placingShipLength?: number;
+    onPlaceShip?: (index: number, player: Player, shipId: string, length: number) =&gt; void;
 }
 &nbsp;
 const Cell: React.FC&lt;CellProps&gt; = ({
@@ -210,15 +224,28 @@ const Cell: React.FC&lt;CellProps&gt; = ({
     children,
     isAttackView = <span class="branch-0 cbranch-no" title="branch not covered" >false,</span>
     revealShips = <span class="branch-0 cbranch-no" title="branch not covered" >false,</span>
+    isPlacementMode = <span class="branch-0 cbranch-no" title="branch not covered" >false,</span>
+    placingShipId = <span class="branch-0 cbranch-no" title="branch not covered" >null,</span>
+    placingShipLength = <span class="branch-0 cbranch-no" title="branch not covered" >0,</span>
+    onPlaceShip,
 }) =&gt; {
 function <span class="fstat-no" title="function not covered" >handleClick(</span>) {
+    // If we are in placement mode and a ship is selected, call onPlaceShip
+<span class="cstat-no" title="statement not covered" >    if (isPlacementMode &amp;&amp; placingShipId &amp;&amp; onPlaceShip) {</span>
+<span class="cstat-no" title="statement not covered" >        onPlaceShip(index, player, placingShipId, placingShipLength ?? 0);</span>
+<span class="cstat-no" title="statement not covered" >        return;</span>
+    }
+&nbsp;
     const action = <span class="cstat-no" title="statement not covered" >"attack"; </span>
 <span class="cstat-no" title="statement not covered" >    updateBoard(index, player, action);</span>
 }
 &nbsp;
 function renderContent() {
     // defense view: show actual content (ships/marks)
-    if (revealShips) return children;
+    if (revealShips) {
+        <span class="missing-if-branch" title="if path not taken" >I</span>if (typeof value === 'string' &amp;&amp; <span class="branch-1 cbranch-no" title="branch not covered" >value.startsWith('ship:'))</span> <span class="cstat-no" title="statement not covered" >return '🚢';</span>
+        return children;
+    }
 &nbsp;
     // attack view: only show known hits/attacks
     <span class="missing-if-branch" title="else path not taken" >E</span>if (isAttackView) {
@@ -247,7 +274,7 @@ export default Cell;
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-11-08T20:29:15.484Z
+                at 2025-11-08T20:46:20.565Z
             </div>
         <script src="../../prettify.js"></script>
         <script>
