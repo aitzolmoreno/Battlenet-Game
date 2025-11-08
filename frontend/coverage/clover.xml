@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<coverage generated="1762247808074" clover="3.2.0">
-  <project timestamp="1762247808074" name="All files">
+<coverage generated="1762626548019" clover="3.2.0">
+  <project timestamp="1762626548020" name="All files">
     <metrics statements="10" coveredstatements="7" conditionals="0" coveredconditionals="0" methods="5" coveredmethods="3" elements="15" coveredelements="10" complexity="0" loc="10" ncloc="10" packages="1" files="1" classes="1"/>
     <file name="ConnectivityTest.tsx" path="C:\Users\xanet\Study\Mondragon\3. urtea\SoftwareEngineering\03_SoftwareConfigurationManagement\Battlenet-Game\frontend\src\pages\ConnectivityTest.tsx">
       <metrics statements="10" coveredstatements="7" conditionals="0" coveredconditionals="0" methods="5" coveredmethods="3"/>
