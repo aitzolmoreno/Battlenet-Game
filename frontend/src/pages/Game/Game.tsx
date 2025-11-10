@@ -430,21 +430,7 @@ export default function Game(): JSX.Element {
                             );
                         })}
                     </div>
-                    <div className="mt-3 flex items-center gap-2">
-                        <label className="text-sm">Orientation:</label>
-                        <button
-                            className={`px-2 py-1 rounded border ${orientation === 'horizontal' ? 'selected' : ''}`}
-                            onClick={() => setOrientation('horizontal')}
-                        >
-                            Horizontal
-                        </button>
-                        <button
-                            className={`px-2 py-1 rounded border ${orientation === 'vertical' ? 'selected' : ''}`}
-                            onClick={() => setOrientation('vertical')}
-                        >
-                            Vertical
-                        </button>
-                    </div>
+
                 </div>
 
                 
