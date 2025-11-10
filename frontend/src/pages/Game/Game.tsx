@@ -35,6 +35,84 @@ interface Scene {
     player2: Player;
 }
 
+// Añade al inicio del archivo, antes de Game()
+const API_BASE = 'http://localhost:8080/api/game';
+
+async function createGame(): Promise<Scene> {
+    const res = await fetch(`${API_BASE}/create`, { method: 'POST' });
+    if (!res.ok) throw new Error(`Error creating game: ${res.status}`);
+    const data = await res.json();
+    return normalizeScene(data);
+}
+
+async function getGameInfo(gameId: string): Promise<Scene> {
+    const res = await fetch(`${API_BASE}/${gameId}`, { method: 'POST' });
+    if (!res.ok) throw new Error(`Error fetching game info: ${res.status}`);
+    const data = await res.json();
+    return normalizeScene({ gameId, game: data });
+}
+
+async function placeShipBackend(gameId: string, playerNum: number, shipId: string, x: number, y: number, horizontal: boolean) {
+    const res = await fetch(`${API_BASE}/${gameId}/place-ship`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ player: playerNum, shipType: shipId.toUpperCase(), x, y, horizontal })
+    });
+    if (!res.ok) throw new Error(`Error placing ship: ${res.status}`);
+    return await res.json();
+}
+
+async function startGameBackend(gameId: string) {
+    const res = await fetch(`${API_BASE}/${gameId}/start`, { method: 'POST' });
+    if (!res.ok) throw new Error(`Error starting game: ${res.status}`);
+    return await res.json();
+}
+
+async function shootBackend(gameId: string, x: number, y: number) {
+    const res = await fetch(`${API_BASE}/${gameId}/shoot`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ x, y })
+    });
+    if (!res.ok) throw new Error(`Error shooting: ${res.status}`);
+    return await res.json();
+}
+
+// Normaliza la respuesta del backend a tu tipo Scene
+function normalizeScene(data: any): Scene {
+    if (!data || !data.game) return {
+        gameId: data.gameId || '',
+        currentTurn: 'player1',
+        winner: null,
+        state: '',
+        player1: { shipsPlaced: false, ready: false, name: 'player1', id: null, board: { ships: [] } },
+        player2: { shipsPlaced: false, ready: false, name: 'player2', id: null, board: { ships: [] } },
+    };
+
+    const g = data.game;
+
+    return {
+        gameId: data.gameId || g.gameId || '',
+        currentTurn: g.currentTurn || 'player1',
+        winner: g.winner ?? null,
+        state: g.state || '',
+        player1: {
+            shipsPlaced: g.player1?.shipsPlaced ?? false,
+            ready: g.player1?.ready ?? false,
+            name: g.player1?.name || 'player1',
+            id: g.player1?.id ?? null,
+            board: { ships: [] }, // puedes mapear barcos del backend si quieres
+        },
+        player2: {
+            shipsPlaced: g.player2?.shipsPlaced ?? false,
+            ready: g.player2?.ready ?? false,
+            name: g.player2?.name || 'player2',
+            id: g.player2?.id ?? null,
+            board: { ships: [] },
+        }
+    };
+}
+
 export default function Game(): JSX.Element {
 
     const [boardA, setBoardA] = useState<(string | null)[]>(() => {
@@ -79,17 +157,40 @@ export default function Game(): JSX.Element {
     const [placedShipsA, setPlacedShipsA] = useState<Record<string, number[]>>({});
     const [selectedShip, setSelectedShip] = useState<{id: string; name: string; length: number} | null>(null);
 
-    function updateBoard(index: number, player: PlayerA, action: string) {
+    async function updateBoard(index: number, player: PlayerA, action: string) {
         if (player !== turn) return;
 
         if (action === "attack") {
-            const targetBoard = player === "A" ? [...boardB] : [...boardA];
-            targetBoard[index] = "Attck"; //en este caso hemos puesto que haga ataque, pero deberiamos de poner mas cosas
-            player === "A" ? setBoardB(targetBoard) : setBoardA(targetBoard);
-        }
+            const row = Math.floor(index / 10);
+            const col = index % 10;
+            try {
+                const res = await shootBackend(scene.gameId, row, col);
+                console.log(res);
 
-        setTurn(turn === "A" ? "B" : "A");
+                // Actualizamos el board local
+                const targetBoard = player === "A" ? [...boardB] : [...boardA];
+                targetBoard[index] = res.result;
+                player === "A" ? setBoardB(targetBoard) : setBoardA(targetBoard);
+
+                // --- Actualizamos scene con el ataque ---
+                setScene(prev => {
+                    const nextScene = { ...prev };
+                    const targetPlayerKey = player === "A" ? 'player2' : 'player1';
+                    if (!nextScene[targetPlayerKey].board.ships) nextScene[targetPlayerKey].board.ships = [];
+                    // Aquí puedes mapear ataques a células si quieres un registro más detallado
+                    window.localStorage.setItem('board', JSON.stringify(nextScene));
+                    return nextScene;
+                });
+
+                if (res.isGameOver) alert(`Game Over! Winner: ${res.winner}`);
+                setTurn(turn === "A" ? "B" : "A");
+            } catch (e) {
+                console.error('Error attacking:', e);
+            }
+        }
     }
+
+
 
     function resetBoards() {
         const empty = Array(100).fill(null);
@@ -118,44 +219,49 @@ export default function Game(): JSX.Element {
         setSelectedShip({ id: shipId, name, length });
     }
 
-    function placeShip(index: number, player: PlayerA, shipId: string, length: number) {
-        // only allow placing on player A's defense board in this simple UI
+    async function placeShip(index: number, player: PlayerA, shipId: string, length: number) {
         if (player !== 'A') return;
-        if (!selectedShip || selectedShip.id !== shipId) {
-            console.warn('No ship selected or mismatch');
-            return;
-        }
+        if (!selectedShip || selectedShip.id !== shipId) return;
 
+        const row = Math.floor(index / 10);
         const col = index % 10;
-        if (col + length > 10) {
-            console.warn('Ship does not fit horizontally from this position');
-            return;
-        }
 
-        // check overlap
-        for (let i = 0; i < length; i++) {
-            if (boardA[index + i] !== null) {
-                console.warn('Cannot place ship: overlap at', index + i);
-                return;
+        try {
+            const horizontal = true;
+            const res = await placeShipBackend(scene.gameId, 1, shipId, row, col, horizontal);
+            console.log(res);
+
+            if (res.success) {
+                // Actualizamos boardA
+                const next = [...boardA];
+                for (let i = 0; i < length; i++) next[index + i] = `ship:${shipId}`;
+                setBoardA(next);
+                
+                // Marcamos el barco colocado
+                setPlacedShipsA(prev => ({ ...prev, [shipId]: Array.from({ length }, (_, k) => index + k) }));
+                setSelectedShip(null);
+
+                // --- Actualizamos scene ---
+                setScene(prev => {
+                    const nextScene = { ...prev };
+                    const newShip = {
+                        id: shipId,
+                        name: shipId,
+                        cell: Array.from({ length }, (_, k) => index + k)
+                    };
+                    nextScene.player1.board.ships = [...(nextScene.player1.board.ships || []), newShip];
+                    nextScene.player1.shipsPlaced = true; // opcional, o calcula según número de barcos
+                    window.localStorage.setItem('board', JSON.stringify(nextScene));
+                    return nextScene;
+                });
+            } else {
+                console.warn(res.message);
             }
+        } catch (e) {
+            console.error('Error placing ship backend:', e);
         }
-
-        const next = [...boardA];
-        const positions: number[] = [];
-        for (let i = 0; i < length; i++) {
-            next[index + i] = `ship:${shipId}`;
-            positions.push(index + i);
-        }
-
-        try { window.localStorage.setItem('boardA', JSON.stringify(next)); } catch {}
-        setBoardA(next);
-        setPlacedShipsA(prev => ({ ...prev, [shipId]: positions }));
-        setSelectedShip(null);
-        console.log(`Placed ${shipId} at`, positions);
     }
 
-
-    const url = '/data/scene.json';
 
     const defaultScene: Scene = {
         player1: {
@@ -191,72 +297,19 @@ export default function Game(): JSX.Element {
 
     useEffect(() => {
 
-        function normalizeScene(data: any): Scene {
-            if (!data || !data.game) {
-                // fallback a default
-                return {
-                    gameId: '',
-                    currentTurn: 'player1',
-                    winner: null,
-                    state: '',
-                    player1: { shipsPlaced: false, ready: false, name: '', id: null, board: { ships: [] } },
-                    player2: { shipsPlaced: false, ready: false, name: '', id: null, board: { ships: [] } },
-                };
-            }
-
-            const g = data.game;
-
-            const scene: Scene = {
-                gameId: data.gameId || g.gameId || '',
-                currentTurn: g.currentTurn || 'player1',
-                winner: g.winner ?? null,
-                state: g.state || '',
-                player1: {
-                    shipsPlaced: g.player1?.shipsPlaced ?? false,
-                    ready: g.player1?.ready ?? false,
-                    name: g.player1?.name || 'player1',
-                    id: g.player1?.id ?? null,
-                    board: { ships: [] }, // por ahora vacío, puedes poblarlo después
-                },
-                player2: {
-                    shipsPlaced: g.player2?.shipsPlaced ?? false,
-                    ready: g.player2?.ready ?? false,
-                    name: g.player2?.name || 'player2',
-                    id: g.player2?.id ?? null,
-                    board: { ships: [] },
-                }
-            };
-
-            return scene;
-        }
-
-
-        async function fetchScene(): Promise<void> {
+        async function initGame() {
             try {
-                const response = await fetch("http://localhost:8080/api/game/create", {
-                    method: "POST", // <- changed from GET to POST
-                    headers: {
-                        "Content-Type": "application/json", // <- set if sending JSON
-                    },
-                    body: JSON.stringify({ /* any payload you want to send */ })
-                });
-
-                if (!response.ok) throw new Error(`Error al cargar el JSON: ${response.status}`);
-                const data = await response.json();
-
-                const normalized = normalizeScene(data);
-                setScene(normalized);
-                window.localStorage.setItem('board', JSON.stringify(normalized));
-                console.log('normalized scene:', normalized);
-
-            } catch (error) {
-                console.error(error);
+                const newScene = await createGame();
+                setScene(newScene);
+                window.localStorage.setItem('board', JSON.stringify(newScene));
+                console.log('Game created:', newScene);
+            } catch (e) {
+                console.error(e);
             }
         }
-        fetchScene();
 
-        return () => { /* cleanup */ };
-    }, [url]);
+        initGame();
+    }, []);
 
     // Safe getter
     function getCell(
