@@ -37,7 +37,7 @@ describe('App component', () => {
     render(<App />);
     fireEvent.click(screen.getByText('Game'));
 
-    // Adjust this to some known text in your Game component
-    expect(screen.getByText(/Game/i)).toBeTruthy();
+    // Use a more specific text that only appears in the Game component
+    expect(screen.getByText('Battlenet Game')).toBeTruthy();
   });
 });
