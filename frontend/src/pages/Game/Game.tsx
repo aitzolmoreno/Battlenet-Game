@@ -84,6 +84,7 @@ export default function Game(): JSX.Element {
     const [readyA, setReadyA] = useState(false);
     const [readyB, setReadyB] = useState(false);
     const [gameStarted, setGameStarted] = useState(false);
+    const [lastActionMessage, setLastActionMessage] = useState<string | null>(null);
 
     function updateBoard(index: number, player: PlayerA, action: string) {
         // only allow attacks when the game has started
@@ -96,9 +97,28 @@ export default function Game(): JSX.Element {
         if (player !== turn) return;
 
         if (action === "attack") {
+            // target board is opponent's defense board
+            const opponent = player === 'A' ? 'B' : 'A';
             const targetBoard = player === "A" ? [...boardB] : [...boardA];
-            targetBoard[index] = "Attck"; // simple attack mark for now
-            player === "A" ? setBoardB(targetBoard) : setBoardA(targetBoard);
+
+            const current = targetBoard[index];
+            // prevent attacking same cell twice
+            if (current === 'Hit' || current === 'Miss') {
+                setLastActionMessage('Already attacked this cell');
+                return;
+            }
+
+            if (typeof current === 'string' && current.startsWith('ship:')) {
+                // it's a hit
+                targetBoard[index] = 'Hit';
+                setLastActionMessage(`Player ${player} HIT ${opponent} at ${index}`);
+            } else {
+                // miss
+                targetBoard[index] = 'Miss';
+                setLastActionMessage(`Player ${player} missed at ${index}`);
+            }
+
+            if (player === 'A') setBoardB(targetBoard); else setBoardA(targetBoard);
             // advance turn after attack
             setTurn(turn === "A" ? "B" : "A");
         }
@@ -374,8 +394,11 @@ export default function Game(): JSX.Element {
                     <button onClick={resetBoards} className="mt-2 px-3 py-1 rounded border">Reset boards</button>
                 </div>
 
-                <div className="ships-setup mt-4">
+                    <div className="ships-setup mt-4">
                     <h3 className="mb-2">Ships to place (Player {placingPlayer})</h3>
+                        {lastActionMessage && (
+                            <div className="mt-2 text-sm text-gray-700">{lastActionMessage}</div>
+                        )}
                     <div className="ships-controls mb-2 flex items-center gap-3">
                         <div>
                             <label className="text-sm mr-2">Player:</label>
@@ -383,7 +406,7 @@ export default function Game(): JSX.Element {
                             <button className={`px-2 py-1 rounded border ${placingPlayer === 'B' ? 'selected' : ''} ml-2`} onClick={() => setPlacingPlayer('B')}>B</button>
                         </div>
                         <div>
-                            <label className="text-sm mr-2">Orientation:</label>
+                            <label className="text-sm mr-2">Ships Orientation:</label>
                             <button
                                 className={`px-2 py-1 rounded border ${orientation === 'horizontal' ? 'selected' : ''}`}
                                 onClick={() => setOrientation('horizontal')}

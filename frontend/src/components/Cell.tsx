@@ -44,6 +44,8 @@ function handleClick() {
 function renderContent() {
     // defense view: show actual content (ships/marks)
     if (revealShips) {
+        if (value === 'Hit') return '💥';
+        if (value === 'Miss') return 'O';
         if (typeof value === 'string' && value.startsWith('ship:')) return '🚢';
         return children;
     }
