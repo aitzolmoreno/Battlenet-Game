@@ -78,6 +78,7 @@ export default function Game(): JSX.Element {
     // Track placed ships for player A (simple map: shipId -> positions[])
     const [placedShipsA, setPlacedShipsA] = useState<Record<string, number[]>>({});
     const [selectedShip, setSelectedShip] = useState<{id: string; name: string; length: number} | null>(null);
+    const [orientation, setOrientation] = useState<'horizontal' | 'vertical'>('horizontal');
 
     function updateBoard(index: number, player: PlayerA, action: string) {
         if (player !== turn) return;
@@ -118,34 +119,48 @@ export default function Game(): JSX.Element {
         setSelectedShip({ id: shipId, name, length });
     }
 
-    function placeShip(index: number, player: PlayerA, shipId: string, length: number) {
+    function placeShip(index: number, player: PlayerA, shipId: string, length: number, orientation: 'horizontal' | 'vertical' = 'horizontal') {
         // only allow placing on player A's defense board in this simple UI
         if (player !== 'A') return;
         if (!selectedShip || selectedShip.id !== shipId) {
             console.warn('No ship selected or mismatch');
             return;
         }
-
+        const row = Math.floor(index / 10);
         const col = index % 10;
-        if (col + length > 10) {
-            console.warn('Ship does not fit horizontally from this position');
-            return;
-        }
+        const positions: number[] = [];
 
-        // check overlap
-        for (let i = 0; i < length; i++) {
-            if (boardA[index + i] !== null) {
-                console.warn('Cannot place ship: overlap at', index + i);
+        if (orientation === 'horizontal') {
+            if (col + length > 10) {
+                console.warn('Ship does not fit horizontally from this position');
                 return;
+            }
+            // check overlap horizontally
+            for (let i = 0; i < length; i++) {
+                if (boardA[index + i] !== null) {
+                    console.warn('Cannot place ship: overlap at', index + i);
+                    return;
+                }
+                positions.push(index + i);
+            }
+        } else {
+            // vertical
+            if (row + length > 10) {
+                console.warn('Ship does not fit vertically from this position');
+                return;
+            }
+            for (let i = 0; i < length; i++) {
+                const pos = index + i * 10;
+                if (boardA[pos] !== null) {
+                    console.warn('Cannot place ship: overlap at', pos);
+                    return;
+                }
+                positions.push(pos);
             }
         }
 
         const next = [...boardA];
-        const positions: number[] = [];
-        for (let i = 0; i < length; i++) {
-            next[index + i] = `ship:${shipId}`;
-            positions.push(index + i);
-        }
+        for (const p of positions) next[p] = `ship:${shipId}`;
 
         try { window.localStorage.setItem('boardA', JSON.stringify(next)); } catch {}
         setBoardA(next);
@@ -314,6 +329,21 @@ export default function Game(): JSX.Element {
                             </div>
                         ))}
                     </div>
+                    <div className="mt-3 flex items-center gap-2">
+                        <label className="text-sm">Orientation:</label>
+                        <button
+                            className={`px-2 py-1 rounded border ${orientation === 'horizontal' ? 'selected' : ''}`}
+                            onClick={() => setOrientation('horizontal')}
+                        >
+                            Horizontal
+                        </button>
+                        <button
+                            className={`px-2 py-1 rounded border ${orientation === 'vertical' ? 'selected' : ''}`}
+                            onClick={() => setOrientation('vertical')}
+                        >
+                            Vertical
+                        </button>
+                    </div>
                 </div>
 
                 
@@ -333,6 +363,7 @@ export default function Game(): JSX.Element {
                                 placingShipId={selectedShip?.id ?? null}
                                 placingShipLength={selectedShip?.length ?? 0}
                                 onPlaceShip={placeShip}
+                                orientation={orientation}
                             />
                         </div>
 
@@ -355,6 +386,7 @@ export default function Game(): JSX.Element {
                                 placingShipId={selectedShip?.id ?? null}
                                 placingShipLength={selectedShip?.length ?? 0}
                                 onPlaceShip={placeShip}
+                                orientation={orientation}
                             />
                         </div>
 

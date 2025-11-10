@@ -12,7 +12,8 @@ interface CellProps {
     isPlacementMode?: boolean;
     placingShipId?: string | null;
     placingShipLength?: number;
-    onPlaceShip?: (index: number, player: Player, shipId: string, length: number) => void;
+    onPlaceShip?: (index: number, player: Player, shipId: string, length: number, orientation?: 'horizontal' | 'vertical') => void;
+    orientation?: 'horizontal' | 'vertical';
 }
 
 const Cell: React.FC<CellProps> = ({
@@ -27,11 +28,12 @@ const Cell: React.FC<CellProps> = ({
     placingShipId = null,
     placingShipLength = 0,
     onPlaceShip,
+    orientation = 'horizontal',
 }) => {
 function handleClick() {
     // If we are in placement mode and a ship is selected, call onPlaceShip
     if (isPlacementMode && placingShipId && onPlaceShip) {
-        onPlaceShip(index, player, placingShipId, placingShipLength ?? 0);
+        onPlaceShip(index, player, placingShipId, placingShipLength ?? 0, orientation);
         return;
     }
 
