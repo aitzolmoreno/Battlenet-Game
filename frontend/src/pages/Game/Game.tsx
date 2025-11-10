@@ -75,21 +75,33 @@ export default function Game(): JSX.Element {
         { id: 'destroyer', name: 'Destroyer', length: 2 },
     ];
 
-    // Track placed ships for player A (simple map: shipId -> positions[])
+    // Track placed ships for players (simple map: shipId -> positions[])
     const [placedShipsA, setPlacedShipsA] = useState<Record<string, number[]>>({});
+    const [placedShipsB, setPlacedShipsB] = useState<Record<string, number[]>>({});
     const [selectedShip, setSelectedShip] = useState<{id: string; name: string; length: number} | null>(null);
+    const [placingPlayer, setPlacingPlayer] = useState<PlayerA>('A');
     const [orientation, setOrientation] = useState<'horizontal' | 'vertical'>('horizontal');
+    const [readyA, setReadyA] = useState(false);
+    const [readyB, setReadyB] = useState(false);
+    const [gameStarted, setGameStarted] = useState(false);
 
     function updateBoard(index: number, player: PlayerA, action: string) {
+        // only allow attacks when the game has started
+        if (action === 'attack' && !gameStarted) {
+            console.warn('Cannot attack: game has not started yet');
+            return;
+        }
+
+        // ensure it's the player's turn
         if (player !== turn) return;
 
         if (action === "attack") {
             const targetBoard = player === "A" ? [...boardB] : [...boardA];
-            targetBoard[index] = "Attck"; //en este caso hemos puesto que haga ataque, pero deberiamos de poner mas cosas
+            targetBoard[index] = "Attck"; // simple attack mark for now
             player === "A" ? setBoardB(targetBoard) : setBoardA(targetBoard);
+            // advance turn after attack
+            setTurn(turn === "A" ? "B" : "A");
         }
-
-        setTurn(turn === "A" ? "B" : "A");
     }
 
     function resetBoards() {
@@ -97,12 +109,26 @@ export default function Game(): JSX.Element {
         try {
             window.localStorage.setItem('boardA', JSON.stringify(empty));
             window.localStorage.setItem('boardB', JSON.stringify(empty));
+            try { window.localStorage.setItem('board', JSON.stringify(defaultScene)); } catch {}
         } catch (e) {
             console.warn('Could not write localStorage during reset:', e);
         }
+
+        // reset in-memory state
         setBoardA([...empty]);
         setBoardB([...empty]);
-        console.log('Boards reset to empty 10x10');
+        setPlacedShipsA({});
+        setPlacedShipsB({});
+        setSelectedShip(null);
+        setPlacingPlayer('A');
+        setOrientation('horizontal');
+        setReadyA(false);
+        setReadyB(false);
+        setGameStarted(false);
+        setTurn('A');
+        try { setScene(defaultScene); } catch {}
+
+        console.log('Boards and game state reset to initial values');
     }
 
     function selectShipToPlace(shipId: string, name: string, length: number) {
@@ -111,33 +137,61 @@ export default function Game(): JSX.Element {
             setSelectedShip(null);
             return;
         }
-        // don't allow re-selecting an already placed ship
-        if (placedShipsA[shipId]) {
-            console.warn('Ship already placed:', shipId);
+        // don't allow re-selecting an already placed ship for the current placing player
+        const already = placingPlayer === 'A' ? placedShipsA[shipId] : placedShipsB[shipId];
+        if (already) {
+            console.warn('Ship already placed for player', placingPlayer, shipId);
             return;
         }
         setSelectedShip({ id: shipId, name, length });
     }
 
-    function placeShip(index: number, player: PlayerA, shipId: string, length: number, orientation: 'horizontal' | 'vertical' = 'horizontal') {
-        // only allow placing on player A's defense board in this simple UI
-        if (player !== 'A') return;
+    function allPlacedForPlayer(player: PlayerA) {
+        return shipsCatalog.every(s => {
+            const record = player === 'A' ? placedShipsA : placedShipsB;
+            return !!record[s.id];
+        });
+    }
+
+    function finishPlacing(player: PlayerA) {
+        if (!allPlacedForPlayer(player)) {
+            console.warn('Not all ships placed for', player);
+            return;
+        }
+        if (player === 'A') setReadyA(true);
+        else setReadyB(true);
+
+        // if both ready, start the game
+        if ((player === 'A' ? true : readyA) && (player === 'B' ? true : readyB)) {
+            // both ready
+            setGameStarted(true);
+            setTurn('A'); // decide starting player (A by default)
+            console.log('Game started');
+        }
+    }
+
+    function placeShip(index: number, player: PlayerA, shipId: string, length: number, orientationParam: 'horizontal' | 'vertical' = orientation) {
+        // only allow placing on the currently selected placing player
+        if (player !== placingPlayer) return;
         if (!selectedShip || selectedShip.id !== shipId) {
             console.warn('No ship selected or mismatch');
             return;
         }
+
         const row = Math.floor(index / 10);
         const col = index % 10;
         const positions: number[] = [];
 
-        if (orientation === 'horizontal') {
+        const targetBoard = player === 'A' ? boardA : boardB;
+
+        if (orientationParam === 'horizontal') {
             if (col + length > 10) {
                 console.warn('Ship does not fit horizontally from this position');
                 return;
             }
             // check overlap horizontally
             for (let i = 0; i < length; i++) {
-                if (boardA[index + i] !== null) {
+                if (targetBoard[index + i] !== null) {
                     console.warn('Cannot place ship: overlap at', index + i);
                     return;
                 }
@@ -151,7 +205,7 @@ export default function Game(): JSX.Element {
             }
             for (let i = 0; i < length; i++) {
                 const pos = index + i * 10;
-                if (boardA[pos] !== null) {
+                if (targetBoard[pos] !== null) {
                     console.warn('Cannot place ship: overlap at', pos);
                     return;
                 }
@@ -159,14 +213,24 @@ export default function Game(): JSX.Element {
             }
         }
 
-        const next = [...boardA];
+        const next = [...targetBoard];
         for (const p of positions) next[p] = `ship:${shipId}`;
 
-        try { window.localStorage.setItem('boardA', JSON.stringify(next)); } catch {}
-        setBoardA(next);
-        setPlacedShipsA(prev => ({ ...prev, [shipId]: positions }));
+        try {
+            const key = player === 'A' ? 'boardA' : 'boardB';
+            window.localStorage.setItem(key, JSON.stringify(next));
+        } catch {}
+
+        if (player === 'A') {
+            setBoardA(next);
+            setPlacedShipsA(prev => ({ ...prev, [shipId]: positions }));
+        } else {
+            setBoardB(next);
+            setPlacedShipsB(prev => ({ ...prev, [shipId]: positions }));
+        }
+
         setSelectedShip(null);
-        console.log(`Placed ${shipId} at`, positions);
+        console.log(`Placed ${shipId} for player ${player} at`, positions);
     }
 
 
@@ -307,27 +371,64 @@ export default function Game(): JSX.Element {
             <header>
                 <h1 className="text-2xl font-bold">Battlenet Game</h1>
                 <div className="header-actions">
-                    <button className="mt-2 mr-2 px-3 py-1 rounded bg-blue-600 text-white">Attack</button>
                     <button onClick={resetBoards} className="mt-2 px-3 py-1 rounded border">Reset boards</button>
                 </div>
 
                 <div className="ships-setup mt-4">
-                    <h3 className="mb-2">Ships to place (Player A)</h3>
+                    <h3 className="mb-2">Ships to place (Player {placingPlayer})</h3>
+                    <div className="ships-controls mb-2 flex items-center gap-3">
+                        <div>
+                            <label className="text-sm mr-2">Player:</label>
+                            <button className={`px-2 py-1 rounded border ${placingPlayer === 'A' ? 'selected' : ''}`} onClick={() => setPlacingPlayer('A')}>A</button>
+                            <button className={`px-2 py-1 rounded border ${placingPlayer === 'B' ? 'selected' : ''} ml-2`} onClick={() => setPlacingPlayer('B')}>B</button>
+                        </div>
+                        <div>
+                            <label className="text-sm mr-2">Orientation:</label>
+                            <button
+                                className={`px-2 py-1 rounded border ${orientation === 'horizontal' ? 'selected' : ''}`}
+                                onClick={() => setOrientation('horizontal')}
+                            >
+                                Horizontal
+                            </button>
+                            <button
+                                className={`px-2 py-1 rounded border ${orientation === 'vertical' ? 'selected' : ''} ml-2`}
+                                onClick={() => setOrientation('vertical')}
+                            >
+                                Vertical
+                            </button>
+                        </div>
+                        <div>
+                            <button
+                                className="ml-4 px-3 py-1 rounded border bg-green-50"
+                                onClick={() => finishPlacing(placingPlayer)}
+                                disabled={!allPlacedForPlayer(placingPlayer) || (placingPlayer === 'A' ? readyA : readyB)}
+                            >
+                                {placingPlayer === 'A' ? (readyA ? 'Placed' : 'Done placing (A)') : (readyB ? 'Placed' : 'Done placing (B)')}
+                            </button>
+                        </div>
+                    </div>
+
                     <div className="ships-list flex gap-2">
-                        {shipsCatalog.map(s => (
-                            <div key={s.id} className="p-2 border rounded">
-                                <div><strong>{s.name}</strong> ({s.length})</div>
-                                <div className="mt-1">
-                                    {placedShipsA[s.id] ? (
-                                        <span className="text-sm text-green-600">Placed</span>
-                                    ) : (
-                                        <button className="px-2 py-1 rounded border" onClick={() => selectShipToPlace(s.id, s.name, s.length)}>
-                                            {selectedShip?.id === s.id ? 'Selected' : 'Select'}
-                                        </button>
-                                    )}
+                        {shipsCatalog.map(s => {
+                            const isPlaced = placingPlayer === 'A' ? placedShipsA[s.id] : placedShipsB[s.id];
+                            return (
+                                <div key={s.id} className="p-2 border rounded">
+                                    <div><strong>{s.name}</strong> ({s.length})</div>
+                                    <div className="mt-1">
+                                        {isPlaced ? (
+                                            <span className="text-sm text-green-600">Placed</span>
+                                        ) : (
+                                            <button
+                                                className={`px-2 py-1 rounded border ${selectedShip?.id === s.id ? 'selected' : ''}`}
+                                                onClick={() => selectShipToPlace(s.id, s.name, s.length)}
+                                            >
+                                                {selectedShip?.id === s.id ? 'Selected' : 'Select'}
+                                            </button>
+                                        )}
+                                    </div>
                                 </div>
-                            </div>
-                        ))}
+                            );
+                        })}
                     </div>
                     <div className="mt-3 flex items-center gap-2">
                         <label className="text-sm">Orientation:</label>
@@ -350,7 +451,7 @@ export default function Game(): JSX.Element {
             </header>
             <section className="game">
                 <div className="boards-grid">
-                    <div className="player-column">
+                    <div className={`player-column ${gameStarted && turn === 'A' ? 'active' : ''}`}>
                         <h2 className="player-title">Player A</h2>
                         <div className="board-wrapper">
                             <div className="board-label">A - Defensa</div>
@@ -373,7 +474,7 @@ export default function Game(): JSX.Element {
                         </div>
                     </div>
 
-                    <div className="player-column">
+                    <div className={`player-column ${gameStarted && turn === 'B' ? 'active' : ''}`}>
                         <h2 className="player-title">Player B</h2>
                         <div className="board-wrapper">
                             <div className="board-label">A - Defensa</div>
