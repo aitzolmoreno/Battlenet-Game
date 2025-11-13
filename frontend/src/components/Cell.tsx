@@ -14,6 +14,7 @@ interface CellProps {
     placingShipLength?: number;
     onPlaceShip?: (index: number, player: Player, shipId: string, length: number, orientation?: 'horizontal' | 'vertical') => void;
     orientation?: 'horizontal' | 'vertical';
+    isSunk?: boolean;
 }
 
 const Cell: React.FC<CellProps> = ({
@@ -29,6 +30,7 @@ const Cell: React.FC<CellProps> = ({
     placingShipLength = 0,
     onPlaceShip,
     orientation = 'horizontal',
+    isSunk = false,
 }) => {
 function handleClick() {
     // If we are in placement mode and a ship is selected, call onPlaceShip
@@ -62,11 +64,13 @@ function renderContent() {
     return children;
 }
 
-return (
-    <button className="cell" onClick={handleClick}>
-        {renderContent()}
-    </button>
-);
+    const className = `cell${isSunk ? ' sunk' : ''}`;
+
+    return (
+        <button className={className} onClick={handleClick}>
+            {renderContent()}
+        </button>
+    );
 };
 
 export default Cell;

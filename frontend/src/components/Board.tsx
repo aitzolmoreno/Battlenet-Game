@@ -16,6 +16,8 @@ interface BoardProps {
     placingShipLength?: number;
     onPlaceShip?: (index: number, player: Player, shipId: string, length: number, orientation?: 'horizontal' | 'vertical') => void;
     orientation?: 'horizontal' | 'vertical';
+    placedShips?: Record<string, number[]>;
+    sunkShips?: Record<string, boolean>;
 }
 
 const Board: React.FC<BoardProps> = ({
@@ -28,13 +30,35 @@ const Board: React.FC<BoardProps> = ({
     placingShipId = null,
     placingShipLength = 0,
     onPlaceShip,
-    orientation = 'horizontal'
+    orientation = 'horizontal',
+    placedShips,
+    sunkShips
 }) => {
     return (
         <div className="board">
             {board.map((cell, index) => {
                 // Generate a stable key based on index and cell value
                 const key = `${index}-${cell ?? "empty"}`;
+                // determine if this cell belongs to a sunk ship
+                let isSunk = false;
+                if (typeof cell === 'string' && cell.startsWith('ship:') && sunkShips) {
+                    const shipId = cell.split(':')[1];
+                    isSunk = !!sunkShips[shipId];
+                }
+
+                // For attack view: if cell is 'Hit' and any sunk ship contains this index, mark as sunk as well
+                if (isAttackView && cell === 'Hit' && placedShips && sunkShips) {
+                    for (const sid of Object.keys(placedShips)) {
+                        if (sunkShips[sid]) {
+                            const positions = placedShips[sid] || [];
+                            if (positions.includes(index)) {
+                                isSunk = true;
+                                break;
+                            }
+                        }
+                    }
+                }
+
                 return (
                     <Cell
                         key={key}
@@ -49,6 +73,7 @@ const Board: React.FC<BoardProps> = ({
                         placingShipLength={placingShipLength}
                         onPlaceShip={onPlaceShip}
                         orientation={orientation}
+                        isSunk={isSunk}
                     >
                         {cell}
                     </Cell>

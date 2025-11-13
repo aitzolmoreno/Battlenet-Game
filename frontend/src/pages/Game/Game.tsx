@@ -57,6 +57,9 @@ export default function Game(): JSX.Element {
 
     const [turn, setTurn] = useState<PlayerA>("A");
     const [gameId, setGameId] = useState<string | null>(null);
+    const [sunkShipsA, setSunkShipsA] = useState<Record<string, boolean>>({});
+    const [sunkShipsB, setSunkShipsB] = useState<Record<string, boolean>>({});
+    const [winner, setWinner] = useState<string | null>(null);
 
     // lista de barcos
     const shipsCatalog = [
@@ -110,6 +113,7 @@ export default function Game(): JSX.Element {
                     body: JSON.stringify({ x: row, y: col }),
                 })
                 .then((resp: any) => {
+                    console.log('Shoot response:', resp);
                     const result = resp.result;
                     if (typeof result === 'string' && result.toLowerCase().includes('hit')) {
                         targetBoard[index] = 'Hit';
@@ -122,9 +126,39 @@ export default function Game(): JSX.Element {
                     if (player === 'A') {
                         setBoardBState(targetBoard);
                         setBoardB(targetBoard);
+                        // detect sunk for player B's ships
+                        detectAndMarkSunk('B', targetBoard);
                     } else {
                         setBoardAState(targetBoard);
                         setBoardA(targetBoard);
+                        detectAndMarkSunk('A', targetBoard);
+                    }
+
+                    // handle game over / winner from server
+                    console.log('Checking winner: isGameOver=', resp.isGameOver, 'winner=', resp.winner);
+                    if (resp.isGameOver || resp.winner) {
+                        const winName = resp.winner || null;
+                        console.log('Setting winner to:', winName);
+                        setWinner(winName);
+                        setGameStarted(false);
+                        setLastActionMessage(winName ? `Game Over — winner: ${winName}` : 'Game Over');
+                    } else {
+                        // also check local state: if all opponent ships are sunk locally
+                        const opponentPlaced = player === 'A' ? placedShipsB : placedShipsA;
+                        const allSunk = Object.keys(opponentPlaced).length > 0 && 
+                                        Object.keys(opponentPlaced).every(shipId => {
+                                            const positions = opponentPlaced[shipId] || [];
+                                            return positions.every(pos => targetBoard[pos] === 'Hit');
+                                        });
+                        console.log('Local check: all ships sunk?', allSunk);
+                        if (allSunk) {
+                            // local detection: this player won
+                            const winnerName = player === 'A' ? 'player1' : 'player2';
+                            console.log('Setting winner to (local):', winnerName);
+                            setWinner(winnerName);
+                            setGameStarted(false);
+                            setLastActionMessage(`Game Over — winner: ${winnerName}`);
+                        }
                     }
 
                     if (resp.currentTurn) {
@@ -145,15 +179,39 @@ export default function Game(): JSX.Element {
                     setLastActionMessage(`Player ${player} missed at ${index}`);
                 }
 
-                if (player === 'A') {
-                    setBoardBState(targetBoard);
-                    setBoardB(targetBoard);
-                } else {
-                    setBoardAState(targetBoard);
-                    setBoardA(targetBoard);
-                }
+                    if (player === 'A') {
+                        setBoardBState(targetBoard);
+                        setBoardB(targetBoard);
+                        detectAndMarkSunk('B', targetBoard);
+                    } else {
+                        setBoardAState(targetBoard);
+                        setBoardA(targetBoard);
+                        detectAndMarkSunk('A', targetBoard);
+                    }
 
-                setTurn(prev => prev === 'A' ? 'B' : 'A');
+                    setTurn(prev => prev === 'A' ? 'B' : 'A');
+            }
+        }
+    }
+
+    function detectAndMarkSunk(player: PlayerA, boardArr: (string | null)[]) {
+        // player is the owner of the board being checked (whose ships might be sunk)
+        const placed = player === 'A' ? placedShipsA : placedShipsB;
+        const sunk = player === 'A' ? sunkShipsA : sunkShipsB;
+
+        for (const shipId of Object.keys(placed)) {
+            if (sunk[shipId]) continue; // already marked
+            const positions = placed[shipId] || [];
+            if (positions.length === 0) continue;
+            const allHit = positions.every(pos => boardArr[pos] === 'Hit');
+            if (allHit) {
+                // mark sunk
+                if (player === 'A') {
+                    setSunkShipsA(prev => ({ ...prev, [shipId]: true }));
+                } else {
+                    setSunkShipsB(prev => ({ ...prev, [shipId]: true }));
+                }
+                setLastActionMessage(`Ship ${shipId} sunk (${player})`);
             }
         }
     }
@@ -177,6 +235,11 @@ export default function Game(): JSX.Element {
             setScene(res.scene as Scene);
             try { setStoredScene(res.scene as Scene); } catch {}
         } catch {}
+
+        // clear winner and sunk markers
+        setWinner(null);
+        setSunkShipsA({});
+        setSunkShipsB({});
 
         console.log('Boards and game state reset to initial values (via data layer)');
         // create a fresh backend game as well
@@ -423,6 +486,23 @@ export default function Game(): JSX.Element {
         <main className="p-4">
             <header>
                 <h1 className="text-2xl font-bold">Battlenet Game</h1>
+                {winner && (
+                    <div className="winner-banner mt-2 px-3 py-1 rounded border bg-yellow-50">
+                        <strong>Winner:</strong> {winner}
+                    </div>
+                )}
+                {winner && (
+                    <div className="modal-overlay">
+                        <div className="modal" role="dialog" aria-modal="true" aria-label="Game result">
+                            <h2>Player {winner === 'player1' ? 'A' : winner === 'player2' ? 'B' : winner} has winned</h2>
+                            <p className="mt-2">The game has finished. Final result: <strong>{winner === 'player1' ? 'Player A' : winner === 'player2' ? 'Player B' : winner}</strong></p>
+                            <div className="modal-actions mt-4">
+                                <button className="px-3 py-1 rounded border mr-2 bg-blue-500 text-white hover:bg-blue-600" onClick={() => { resetBoards(); setWinner(null); }}>Rematch</button>
+                                <button className="px-3 py-1 rounded border bg-gray-200 hover:bg-gray-300" onClick={() => setWinner(null)}>Close</button>
+                            </div>
+                        </div>
+                    </div>
+                )}
                 <div className="header-actions">
                     <button onClick={resetBoards} className="mt-2 px-3 py-1 rounded border">Reset boards</button>
                 </div>
@@ -502,6 +582,8 @@ export default function Game(): JSX.Element {
                                 board={boardA}
                                 updateBoard={updateBoard}
                                 revealShips={true}
+                                placedShips={placedShipsA}
+                                sunkShips={sunkShipsA}
                                 isPlacementMode={!!selectedShip}
                                 placingShipId={selectedShip?.id ?? null}
                                 placingShipLength={selectedShip?.length ?? 0}
@@ -512,7 +594,7 @@ export default function Game(): JSX.Element {
 
                         <div className="board-wrapper">
                             <div className="board-label">A - Ataque</div>
-                            <Board player="A" board={boardB} updateBoard={updateBoard} isAttackView={true} />
+                            <Board player="A" board={boardB} updateBoard={updateBoard} isAttackView={true} placedShips={placedShipsB} sunkShips={sunkShipsB} />
                         </div>
                     </div>
 
@@ -525,6 +607,8 @@ export default function Game(): JSX.Element {
                                 board={boardB}
                                 updateBoard={updateBoard}
                                 revealShips={true}
+                                placedShips={placedShipsB}
+                                sunkShips={sunkShipsB}
                                 isPlacementMode={!!selectedShip}
                                 placingShipId={selectedShip?.id ?? null}
                                 placingShipLength={selectedShip?.length ?? 0}
@@ -535,7 +619,7 @@ export default function Game(): JSX.Element {
 
                         <div className="board-wrapper">
                             <div className="board-label">B - Ataque</div>
-                            <Board player="B" board={boardA} updateBoard={updateBoard} isAttackView={true} />
+                            <Board player="B" board={boardA} updateBoard={updateBoard} isAttackView={true} placedShips={placedShipsA} sunkShips={sunkShipsA} />
                         </div>
                     </div>
                 </div>
