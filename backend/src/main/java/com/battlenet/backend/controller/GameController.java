@@ -218,4 +218,109 @@ public class GameController {
         }
         return response;
     }
+
+    @GetMapping("/{gameId}/board-state")
+    public Map<String, Object> getBoardState(@PathVariable String gameId) {
+        Game game = games.get(gameId);
+        Map<String, Object> response = new HashMap<>();
+        
+        if (game == null) {
+            response.put(SUCCESS, false);
+            response.put(MESSAGE, GAME_NOT_FOUND);
+            return response;
+        }
+
+        response.put(SUCCESS, true);
+        response.put("player1Board", serializeBoard(game.getPlayer1().getBoard()));
+        response.put("player2Board", serializeBoard(game.getPlayer2().getBoard()));
+        response.put("player1SunkShips", getSunkShips(game.getPlayer1()));
+        response.put("player2SunkShips", getSunkShips(game.getPlayer2()));
+        response.put(CURRENT_TURN, game.isPlayer1Turn() ? PLAYER1NAME : PLAYER2NAME);
+        response.put(STATE, game.getState().toString());
+        response.put(WINNER, game.getWinner() != null ? game.getWinner().getName() : null);
+        
+        return response;
+    }
+
+    @PostMapping("/{gameId}/validate-placement")
+    public Map<String, Object> validatePlacement(
+            @PathVariable String gameId,
+            @RequestBody Map<String, Object> request) {
+        
+        Game game = games.get(gameId);
+        Map<String, Object> response = new HashMap<>();
+        
+        if (game == null) {
+            response.put(SUCCESS, false);
+            response.put(MESSAGE, GAME_NOT_FOUND);
+            return response;
+        }
+
+        int playerNum = (Integer) request.get("player");
+        String shipType = (String) request.get("shipType");
+        int x = (Integer) request.get("x");
+        int y = (Integer) request.get("y");
+        boolean horizontal = (Boolean) request.get("horizontal");
+
+        Player player = (playerNum == 1) ? game.getPlayer1() : game.getPlayer2();
+        Board board = player.getBoard();
+
+        Ship.ShipType type = Ship.ShipType.valueOf(shipType);
+        int length = Ship.getShipLength(type);
+
+        boolean valid = validateShipPlacement(board, x, y, length, horizontal);
+
+        response.put(SUCCESS, true);
+        response.put("valid", valid);
+        response.put("length", length);
+        if (!valid) {
+            response.put(MESSAGE, "Invalid placement: Position occupied or out of bounds");
+        }
+        
+        return response;
+    }
+
+    private List<String> serializeBoard(Board board) {
+        List<String> result = new ArrayList<>();
+        for (int i = 0; i < 10; i++) {
+            for (int j = 0; j < 10; j++) {
+                Cell cell = board.getCell(i, j);
+                if (cell.isHit()) {
+                    result.add(cell.getShip() != null ? "Hit" : "Miss");
+                } else if (cell.getShip() != null) {
+                    result.add("ship:" + cell.getShip().getType().toString());
+                } else {
+                    result.add(null);
+                }
+            }
+        }
+        return result;
+    }
+
+    private Map<String, Boolean> getSunkShips(Player player) {
+        Map<String, Boolean> sunkShips = new HashMap<>();
+        for (Ship ship : player.getBoard().getShips()) {
+            sunkShips.put(ship.getType().toString(), ship.isSunk());
+        }
+        return sunkShips;
+    }
+
+    private boolean validateShipPlacement(Board board, int x, int y, int length, boolean horizontal) {
+        if (horizontal) {
+            if (y + length > 10) return false;
+            for (int i = 0; i < length; i++) {
+                if (board.getCell(x, y + i).getShip() != null) {
+                    return false;
+                }
+            }
+        } else {
+            if (x + length > 10) return false;
+            for (int i = 0; i < length; i++) {
+                if (board.getCell(x + i, y).getShip() != null) {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
 }

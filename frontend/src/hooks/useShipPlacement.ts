@@ -89,27 +89,28 @@ export const useShipPlacement = ({
         const positions: number[] = [];
         const targetBoard = player === 'A' ? boardA : boardB;
 
+        // Calcular posiciones
         if (orientationParam === 'horizontal') {
             if (col + length > 10) {
-                console.warn('Ship does not fit horizontally from this position');
+                setLastActionMessage('Ship does not fit horizontally (out of bounds)');
                 return;
             }
             for (let i = 0; i < length; i++) {
                 if (targetBoard[index + i] !== null) {
-                    console.warn('Cannot place ship: overlap at', index + i);
+                    setLastActionMessage(`Cannot place ship: overlaps with existing ship`);
                     return;
                 }
                 positions.push(index + i);
             }
         } else {
             if (row + length > 10) {
-                console.warn('Ship does not fit vertically from this position');
+                setLastActionMessage('Ship does not fit vertically (out of bounds)');
                 return;
             }
             for (let i = 0; i < length; i++) {
                 const pos = index + i * 10;
                 if (targetBoard[pos] !== null) {
-                    console.warn('Cannot place ship: overlap at', pos);
+                    setLastActionMessage(`Cannot place ship: overlaps with existing ship`);
                     return;
                 }
                 positions.push(pos);
@@ -165,7 +166,7 @@ export const useShipPlacement = ({
             });
         } else {
             updateLocalState();
-            console.log(`Placed ${shipId} for player ${player} at`, positions);
+            setLastActionMessage(`Placed ${shipId} for player ${player}`);
         }
     };
 

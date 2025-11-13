@@ -254,4 +254,36 @@ describe('data layer - localStorage wrapper', () => {
       Storage.prototype.setItem = originalSetItem;
     });
   });
+
+  describe('Edge cases and data validation', () => {
+    test('getBoardB returns default when array length is not 100', () => {
+      window.localStorage.setItem('boardB', JSON.stringify(Array(50).fill(null)));
+      
+      const board = getBoardB();
+      expect(board).toEqual(DEFAULT_BOARD);
+      expect(board.length).toBe(100);
+    });
+
+    test('getBoardA returns default when array length is not 100', () => {
+      window.localStorage.setItem('boardA', JSON.stringify(Array(200).fill(null)));
+      
+      const board = getBoardA();
+      expect(board).toEqual(DEFAULT_BOARD);
+      expect(board.length).toBe(100);
+    });
+
+    test('getBoardB handles non-array data', () => {
+      window.localStorage.setItem('boardB', JSON.stringify({ invalid: 'data' }));
+      
+      const board = getBoardB();
+      expect(board).toEqual(DEFAULT_BOARD);
+    });
+
+    test('getPlacedShips returns default when data is not an object', () => {
+      window.localStorage.setItem('placedShips_A', JSON.stringify(['array', 'data']));
+      
+      const ships = getPlacedShips('A');
+      expect(ships).toEqual({});
+    });
+  });
 });

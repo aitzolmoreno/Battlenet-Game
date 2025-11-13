@@ -24,23 +24,26 @@ export const useGameLogic = () => {
     const [gameStarted, setGameStarted] = useState(false);
     const [lastActionMessage, setLastActionMessage] = useState<string | null>(null);
 
-    const detectAndMarkSunk = (player: PlayerA, boardArr: (string | null)[]) => {
-        const placed = player === 'A' ? placedShipsA : placedShipsB;
-        const sunk = player === 'A' ? sunkShipsA : sunkShipsB;
-
-        for (const shipId of Object.keys(placed)) {
-            if (sunk[shipId]) continue;
-            const positions = placed[shipId] || [];
-            if (positions.length === 0) continue;
-            const allHit = positions.every(pos => boardArr[pos] === 'Hit');
-            if (allHit) {
-                if (player === 'A') {
-                    setSunkShipsA(prev => ({ ...prev, [shipId]: true }));
-                } else {
-                    setSunkShipsB(prev => ({ ...prev, [shipId]: true }));
+    // Sincronizar estado desde el backend
+    const syncBoardState = async () => {
+        if (!gameId) return;
+        
+        try {
+            const response: any = await apiFetch(`/api/game/${gameId}/board-state`);
+            if (response.success) {
+                setBoardAState(response.player1Board);
+                setBoardA(response.player1Board);
+                setBoardBState(response.player2Board);
+                setBoardB(response.player2Board);
+                setSunkShipsA(response.player1SunkShips || {});
+                setSunkShipsB(response.player2SunkShips || {});
+                setTurn(response.currentTurn === 'player1' ? 'A' : 'B');
+                if (response.winner) {
+                    setWinner(response.winner);
                 }
-                setLastActionMessage(`Ship ${shipId} sunk (${player})`);
             }
+        } catch (error) {
+            console.error('Error syncing board state:', error);
         }
     };
 
@@ -65,30 +68,18 @@ export const useGameLogic = () => {
             const row = Math.floor(index / 10);
             const col = index % 10;
 
-            const updateBoardState = (isHit: boolean) => {
-                targetBoard[index] = isHit ? 'Hit' : 'Miss';
-                setLastActionMessage(`Player ${player} ${isHit ? 'HIT' : 'missed'} ${opponent} at ${index}`);
-                
-                if (player === 'A') {
-                    setBoardBState(targetBoard);
-                    setBoardB(targetBoard);
-                    detectAndMarkSunk('B', targetBoard);
-                } else {
-                    setBoardAState(targetBoard);
-                    setBoardA(targetBoard);
-                    detectAndMarkSunk('A', targetBoard);
-                }
-            };
-
             if (gameId) {
                 apiFetch(`/api/game/${gameId}/shoot`, {
                     method: 'POST',
                     body: JSON.stringify({ x: row, y: col }),
                 })
-                .then((resp: any) => {
+                .then(async (resp: any) => {
+                    // Sincronizar todo el estado desde el backend
+                    await syncBoardState();
+                    
                     const result = resp.result;
                     const isHit = typeof result === 'string' && result.toLowerCase().includes('hit');
-                    updateBoardState(isHit);
+                    setLastActionMessage(`Player ${player} ${isHit ? 'HIT' : 'missed'} ${opponent} at ${index}`);
 
                     if (resp.isGameOver || resp.winner) {
                         setWinner(resp.winner || null);
@@ -105,8 +96,18 @@ export const useGameLogic = () => {
                     setLastActionMessage('Error contacting server');
                 });
             } else {
+                // Modo local sin backend
                 const isHit = typeof current === 'string' && current.startsWith('ship:');
-                updateBoardState(isHit);
+                targetBoard[index] = isHit ? 'Hit' : 'Miss';
+                setLastActionMessage(`Player ${player} ${isHit ? 'HIT' : 'missed'} ${opponent} at ${index}`);
+                
+                if (player === 'A') {
+                    setBoardBState(targetBoard);
+                    setBoardB(targetBoard);
+                } else {
+                    setBoardAState(targetBoard);
+                    setBoardA(targetBoard);
+                }
                 setTurn(prev => prev === 'A' ? 'B' : 'A');
             }
         }
