@@ -37,16 +37,14 @@ const Board: React.FC<BoardProps> = ({
     return (
         <div className="board">
             {board.map((cell, index) => {
-                // Generate a stable key based on index and cell value
                 const key = `${index}-${cell ?? "empty"}`;
-                // determine if this cell belongs to a sunk ship
                 let isSunk = false;
+                
                 if (typeof cell === 'string' && cell.startsWith('ship:') && sunkShips) {
                     const shipId = cell.split(':')[1];
                     isSunk = !!sunkShips[shipId];
                 }
 
-                // For attack view: if cell is 'Hit' and any sunk ship contains this index, mark as sunk as well
                 if (isAttackView && cell === 'Hit' && placedShips && sunkShips) {
                     for (const sid of Object.keys(placedShips)) {
                         if (sunkShips[sid]) {
@@ -74,9 +72,7 @@ const Board: React.FC<BoardProps> = ({
                         onPlaceShip={onPlaceShip}
                         orientation={orientation}
                         isSunk={isSunk}
-                    >
-                        {cell}
-                    </Cell>
+                    />
                 );
             })}
         </div>

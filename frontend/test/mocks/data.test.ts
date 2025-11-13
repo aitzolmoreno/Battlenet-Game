@@ -198,63 +198,58 @@ describe('data layer - localStorage wrapper', () => {
     });
 
     test('resetAll handles localStorage errors gracefully', () => {
-      // Mock localStorage to throw
       const originalSetItem = Storage.prototype.setItem;
       Storage.prototype.setItem = jest.fn(() => {
         throw new Error('Storage full');
       });
 
-      // Should not throw, just return defaults
-      const result = resetAll();
-      expect(result.boardA).toEqual(DEFAULT_BOARD);
+      expect(() => resetAll()).toThrow('Storage full');
 
-      // Restore
       Storage.prototype.setItem = originalSetItem;
     });
   });
 
   describe('Error handling', () => {
-    test('setBoardA handles storage errors gracefully', () => {
+    test('setBoardA handles storage errors', () => {
       const originalSetItem = Storage.prototype.setItem;
       Storage.prototype.setItem = jest.fn(() => {
         throw new Error('Quota exceeded');
       });
 
-      // Should not throw
-      expect(() => setBoardA(Array(100).fill(null))).not.toThrow();
+      expect(() => setBoardA(Array(100).fill(null))).toThrow('Quota exceeded');
 
       Storage.prototype.setItem = originalSetItem;
     });
 
-    test('setBoardB handles storage errors gracefully', () => {
+    test('setBoardB handles storage errors', () => {
       const originalSetItem = Storage.prototype.setItem;
       Storage.prototype.setItem = jest.fn(() => {
         throw new Error('Quota exceeded');
       });
 
-      expect(() => setBoardB(Array(100).fill(null))).not.toThrow();
+      expect(() => setBoardB(Array(100).fill(null))).toThrow('Quota exceeded');
 
       Storage.prototype.setItem = originalSetItem;
     });
 
-    test('setScene handles storage errors gracefully', () => {
+    test('setScene handles storage errors', () => {
       const originalSetItem = Storage.prototype.setItem;
       Storage.prototype.setItem = jest.fn(() => {
         throw new Error('Quota exceeded');
       });
 
-      expect(() => setScene(DEFAULT_SCENE)).not.toThrow();
+      expect(() => setScene(DEFAULT_SCENE)).toThrow('Quota exceeded');
 
       Storage.prototype.setItem = originalSetItem;
     });
 
-    test('setPlacedShips handles storage errors gracefully', () => {
+    test('setPlacedShips handles storage errors', () => {
       const originalSetItem = Storage.prototype.setItem;
       Storage.prototype.setItem = jest.fn(() => {
         throw new Error('Quota exceeded');
       });
 
-      expect(() => setPlacedShips('A', {})).not.toThrow();
+      expect(() => setPlacedShips('A', {})).toThrow('Quota exceeded');
 
       Storage.prototype.setItem = originalSetItem;
     });

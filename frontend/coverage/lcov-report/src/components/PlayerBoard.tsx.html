@@ -3,7 +3,7 @@
 <html lang="en">
 
 <head>
-    <title>Code coverage report for src/components/Cell.tsx</title>
+    <title>Code coverage report for src/components/PlayerBoard.tsx</title>
     <meta charset="utf-8" />
     <link rel="stylesheet" href="../../prettify.css" />
     <link rel="stylesheet" href="../../base.css" />
@@ -19,34 +19,34 @@
 <body>
 <div class='wrapper'>
     <div class='pad1'>
-        <h1><a href="../../index.html">All files</a> / <a href="index.html">src/components</a> Cell.tsx</h1>
+        <h1><a href="../../index.html">All files</a> / <a href="index.html">src/components</a> PlayerBoard.tsx</h1>
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">100% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>25/25</span>
+                <span class='fraction'>5/5</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">100% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>32/32</span>
+                <span class='fraction'>6/6</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">100% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>3/3</span>
+                <span class='fraction'>1/1</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">100% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>20/20</span>
+                <span class='fraction'>5/5</span>
             </div>
         
             
@@ -128,7 +128,14 @@
 <a name='L63'></a><a href='#L63'>63</a>
 <a name='L64'></a><a href='#L64'>64</a>
 <a name='L65'></a><a href='#L65'>65</a>
-<a name='L66'></a><a href='#L66'>66</a></td><td class="line-coverage quiet"><span class="cline-any cline-yes">5x</span>
+<a name='L66'></a><a href='#L66'>66</a>
+<a name='L67'></a><a href='#L67'>67</a>
+<a name='L68'></a><a href='#L68'>68</a>
+<a name='L69'></a><a href='#L69'>69</a>
+<a name='L70'></a><a href='#L70'>70</a>
+<a name='L71'></a><a href='#L71'>71</a>
+<a name='L72'></a><a href='#L72'>72</a></td><td class="line-coverage quiet"><span class="cline-any cline-yes">3x</span>
+<span class="cline-any cline-yes">3x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -146,7 +153,8 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">5x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">3x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -160,104 +168,114 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">33598x</span>
-<span class="cline-any cline-yes">20x</span>
-<span class="cline-any cline-yes">12x</span>
-<span class="cline-any cline-yes">12x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">8x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">33598x</span>
-<span class="cline-any cline-yes">33598x</span>
-<span class="cline-any cline-yes">16643x</span>
-<span class="cline-any cline-yes">16640x</span>
-<span class="cline-any cline-yes">16638x</span>
-<span class="cline-any cline-yes">16598x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">16955x</span>
-<span class="cline-any cline-yes">16245x</span>
-<span class="cline-any cline-yes">16240x</span>
-<span class="cline-any cline-yes">16239x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">710x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">33598x</span>
+<span class="cline-any cline-yes">164x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">5x</span>
-<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import React from "react";
-import type { Player } from "./Player";
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">3x</span>
+<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import React from 'react';
+import Board from './Board';
+import type { Player } from './Player';
 &nbsp;
-interface CellProps {
-    index: number;
+interface PlayerBoardProps {
     player: Player;
-    value: string | null;
+    playerName: string;
+    isActive: boolean;
+    defenseBoard: (string | null)[];
+    attackBoard: (string | null)[];
+    placedShipsDefense: Record&lt;string, number[]&gt;;
+    placedShipsAttack: Record&lt;string, number[]&gt;;
+    sunkShipsDefense: Record&lt;string, boolean&gt;;
+    sunkShipsAttack: Record&lt;string, boolean&gt;;
     updateBoard: (index: number, player: Player, action: string) =&gt; void;
-    isAttackView?: boolean;
-    revealShips?: boolean;
-    isPlacementMode?: boolean;
-    placingShipId?: string | null;
-    placingShipLength?: number;
-    onPlaceShip?: (index: number, player: Player, shipId: string, length: number, orientation?: 'horizontal' | 'vertical') =&gt; void;
-    orientation?: 'horizontal' | 'vertical';
-    isSunk?: boolean;
+    selectedShip: { id: string; name: string; length: number } | null;
+    onPlaceShip: (index: number, player: Player, shipId: string, length: number, orientation?: 'horizontal' | 'vertical') =&gt; void;
+    orientation: 'horizontal' | 'vertical';
 }
 &nbsp;
-const Cell: React.FC&lt;CellProps&gt; = ({
-    index,
+const PlayerBoard: React.FC&lt;PlayerBoardProps&gt; = ({
     player,
-    value,
+    playerName,
+    isActive,
+    defenseBoard,
+    attackBoard,
+    placedShipsDefense,
+    placedShipsAttack,
+    sunkShipsDefense,
+    sunkShipsAttack,
     updateBoard,
-    isAttackView = false,
-    revealShips = false,
-    isPlacementMode = false,
-    placingShipId = null,
-    placingShipLength = 0,
+    selectedShip,
     onPlaceShip,
-    orientation = 'horizontal',
-    isSunk = false,
+    orientation
 }) =&gt; {
-    const handleClick = () =&gt; {
-        if (isPlacementMode &amp;&amp; placingShipId &amp;&amp; onPlaceShip) {
-            onPlaceShip(index, player, placingShipId, placingShipLength, orientation);
-            return;
-        }
-        updateBoard(index, player, "attack");
-    };
-&nbsp;
-    const renderContent = () =&gt; {
-        if (revealShips) {
-            if (value === 'Hit') return '💥';
-            if (value === 'Miss') return 'O';
-            if (typeof value === 'string' &amp;&amp; value.startsWith('ship:')) return '🚢';
-            return null;
-        }
-&nbsp;
-        if (isAttackView) {
-            if (value === 'Attck' || value === 'Hit') return 'X';
-            if (value === 'Miss') return 'O';
-            return null;
-        }
-&nbsp;
-        return null;
-    };
-&nbsp;
     return (
-        &lt;button className={`cell${isSunk ? ' sunk' : ''}`} onClick={handleClick}&gt;
-            {renderContent()}
-        &lt;/button&gt;
+        &lt;div className={`player-column ${isActive ? 'active' : ''}`}&gt;
+            &lt;h2 className="player-title"&gt;{playerName}&lt;/h2&gt;
+            &lt;div className="board-wrapper"&gt;
+                &lt;div className="board-label"&gt;{player} - Defensa&lt;/div&gt;
+                &lt;Board
+                    player={player}
+                    board={defenseBoard}
+                    updateBoard={updateBoard}
+                    revealShips={true}
+                    placedShips={placedShipsDefense}
+                    sunkShips={sunkShipsDefense}
+                    isPlacementMode={!!selectedShip}
+                    placingShipId={selectedShip?.id ?? null}
+                    placingShipLength={selectedShip?.length ?? 0}
+                    onPlaceShip={onPlaceShip}
+                    orientation={orientation}
+                /&gt;
+            &lt;/div&gt;
+&nbsp;
+            &lt;div className="board-wrapper"&gt;
+                &lt;div className="board-label"&gt;{player} - Ataque&lt;/div&gt;
+                &lt;Board 
+                    player={player} 
+                    board={attackBoard} 
+                    updateBoard={updateBoard} 
+                    isAttackView={true} 
+                    placedShips={placedShipsAttack} 
+                    sunkShips={sunkShipsAttack} 
+                /&gt;
+            &lt;/div&gt;
+        &lt;/div&gt;
     );
 };
 &nbsp;
-export default Cell;
+export default PlayerBoard;
 &nbsp;</pre></td></tr></table></pre>
 
                 <div class='push'></div><!-- for sticky footer -->

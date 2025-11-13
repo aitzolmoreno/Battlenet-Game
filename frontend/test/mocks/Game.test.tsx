@@ -639,4 +639,37 @@ describe('Game component', () => {
     expect(header).toBeTruthy();
     expect(screen.getByText('Battlenet Game')).toBeTruthy();
   });
+
+  test('cannot attack when game has not started', async () => {
+    render(<Game />);
+
+    const allButtons = screen.getAllByRole('button');
+    const cellButtons = allButtons.filter(b => {
+      const className = b.className || '';
+      return className.includes('cell');
+    });
+
+    fireEvent.click(cellButtons[100]);
+
+    await waitFor(() => {
+      const warnCalls = (console.warn as any).mock.calls;
+      const hasWarning = warnCalls.some((call: any[]) =>
+        call.some((arg: any) =>
+          typeof arg === 'string' && arg.includes('Cannot attack')
+        )
+      );
+      expect(hasWarning).toBe(true);
+    });
+  });
+
+  test('resetBoards clears winner state', async () => {
+    render(<Game />);
+
+    const resetButton = screen.getByText('Reset boards');
+    fireEvent.click(resetButton);
+
+    await waitFor(() => {
+      expect(screen.queryByRole('dialog')).toBeNull();
+    });
+  });
 });

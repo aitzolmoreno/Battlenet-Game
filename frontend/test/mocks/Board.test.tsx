@@ -36,11 +36,12 @@ describe('Board component', () => {
         player={mockPlayer}
         board={boardWithValue}
         updateBoard={mockUpdateBoard}
+        revealShips={true}
       />
     );
 
     const buttons = screen.getAllByRole('button');
-    expect(buttons[0].textContent).toBe('Hit');
+    expect(buttons[0].textContent).toBe('💥');
   });
 
   test('passes isAttackView prop to cells', () => {

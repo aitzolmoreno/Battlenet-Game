@@ -8,22 +8,6 @@ import { describe, test, expect, jest } from '@jest/globals';
 describe('Cell component renderContent', () => {
   const mockPlayer: Player = "A";
 
-  test('renders children when revealShips is true and value is not special', () => {
-    render(
-      <Cell
-        index={0}
-        player={mockPlayer}
-        value="other"
-        updateBoard={() => {}}
-        revealShips
-      >
-        Ship
-      </Cell>
-    );
-
-    expect(screen.getByText('Ship')).toBeTruthy();
-  });
-
   test('renders ship emoji when value starts with ship: and revealShips is true', () => {
     render(
       <Cell
@@ -126,19 +110,18 @@ describe('Cell component renderContent', () => {
     expect(button.textContent).toBe('');
   });
 
-  test('renders children by default when not attack view and revealShips is false', () => {
+  test('renders empty string by default when not attack view and revealShips is false', () => {
     render(
       <Cell
         index={0}
         player={mockPlayer}
         value="Attck"
         updateBoard={() => {}}
-      >
-        Default
-      </Cell>
+      />
     );
 
-    expect(screen.getByText('Default')).toBeTruthy();
+    const button = screen.getByRole('button');
+    expect(button.textContent).toBe('');
   });
 
   test('calls updateBoard with attack action when clicked in normal mode', () => {
