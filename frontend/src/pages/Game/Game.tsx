@@ -15,6 +15,7 @@ import {
 } from '../../lib/data';
 
 import { apiFetch } from '../../lib/api';
+import { computeSunkShips, allShipsPlaced, computePlacement, interpretShootResponse, interpretPlaceShipResponse, interpretStartResponse, parseCreateGameResponse, computeSceneWithCell, computeResetState, checkLocalWinner, isGameReadyToStart, applyLocalPlacement } from './helpers';
 
 export type PlayerA = "A" | "B";
 
@@ -113,57 +114,36 @@ export default function Game(): JSX.Element {
                     body: JSON.stringify({ x: row, y: col }),
                 })
                 .then((resp: any) => {
-                    console.log('Shoot response:', resp);
-                    const result = resp.result;
-                    if (typeof result === 'string' && result.toLowerCase().includes('hit')) {
-                        targetBoard[index] = 'Hit';
-                        setLastActionMessage(`Player ${player} HIT ${opponent} at ${index}`);
-                    } else {
-                        targetBoard[index] = 'Miss';
-                        setLastActionMessage(`Player ${player} missed at ${index}`);
-                    }
+                    const opponentPlaced = player === 'A' ? placedShipsB : placedShipsA;
+                    const interp = interpretShootResponse(resp, index, player, targetBoard, opponentPlaced);
+
+                    // set immediate last action message (Hit/Miss)
+                    if (interp.lastActionMessage) setLastActionMessage(interp.lastActionMessage);
 
                     if (player === 'A') {
-                        setBoardBState(targetBoard);
-                        setBoardB(targetBoard);
-                        // detect sunk for player B's ships
-                        detectAndMarkSunk('B', targetBoard);
+                        setBoardBState(interp.updatedBoard);
+                        setBoardB(interp.updatedBoard);
+                        for (const shipId of interp.newlySunk) {
+                            setSunkShipsB(prev => ({ ...prev, [shipId]: true }));
+                            // mirror previous behavior: message about sunk ship (owner is B)
+                            setLastActionMessage(`Ship ${shipId} sunk (B)`);
+                        }
                     } else {
-                        setBoardAState(targetBoard);
-                        setBoardA(targetBoard);
-                        detectAndMarkSunk('A', targetBoard);
-                    }
-
-                    // handle game over / winner from server
-                    console.log('Checking winner: isGameOver=', resp.isGameOver, 'winner=', resp.winner);
-                    if (resp.isGameOver || resp.winner) {
-                        const winName = resp.winner || null;
-                        console.log('Setting winner to:', winName);
-                        setWinner(winName);
-                        setGameStarted(false);
-                        setLastActionMessage(winName ? `Game Over — winner: ${winName}` : 'Game Over');
-                    } else {
-                        // also check local state: if all opponent ships are sunk locally
-                        const opponentPlaced = player === 'A' ? placedShipsB : placedShipsA;
-                        const allSunk = Object.keys(opponentPlaced).length > 0 && 
-                                        Object.keys(opponentPlaced).every(shipId => {
-                                            const positions = opponentPlaced[shipId] || [];
-                                            return positions.every(pos => targetBoard[pos] === 'Hit');
-                                        });
-                        console.log('Local check: all ships sunk?', allSunk);
-                        if (allSunk) {
-                            // local detection: this player won
-                            const winnerName = player === 'A' ? 'player1' : 'player2';
-                            console.log('Setting winner to (local):', winnerName);
-                            setWinner(winnerName);
-                            setGameStarted(false);
-                            setLastActionMessage(`Game Over — winner: ${winnerName}`);
+                        setBoardAState(interp.updatedBoard);
+                        setBoardA(interp.updatedBoard);
+                        for (const shipId of interp.newlySunk) {
+                            setSunkShipsA(prev => ({ ...prev, [shipId]: true }));
+                            setLastActionMessage(`Ship ${shipId} sunk (A)`);
                         }
                     }
 
-                    if (resp.currentTurn) {
-                        setTurn(resp.currentTurn === 'player1' ? 'A' : 'B');
+                    if (interp.winner) {
+                        setWinner(interp.winner);
+                        setGameStarted(false);
+                        setLastActionMessage(interp.winner ? `Game Over — winner: ${interp.winner}` : 'Game Over');
                     }
+
+                    if (interp.nextTurn) setTurn(interp.nextTurn);
                 })
                 .catch(err => {
                     console.error('Error shooting', err);
@@ -183,10 +163,24 @@ export default function Game(): JSX.Element {
                         setBoardBState(targetBoard);
                         setBoardB(targetBoard);
                         detectAndMarkSunk('B', targetBoard);
+                        // Check for local win
+                        const localWinner = checkLocalWinner('A', placedShipsB, targetBoard);
+                        if (localWinner) {
+                            setWinner(localWinner);
+                            setGameStarted(false);
+                            setLastActionMessage(`Game Over — winner: ${localWinner}`);
+                        }
                     } else {
                         setBoardAState(targetBoard);
                         setBoardA(targetBoard);
                         detectAndMarkSunk('A', targetBoard);
+                        // Check for local win
+                        const localWinner = checkLocalWinner('B', placedShipsA, targetBoard);
+                        if (localWinner) {
+                            setWinner(localWinner);
+                            setGameStarted(false);
+                            setLastActionMessage(`Game Over — winner: ${localWinner}`);
+                        }
                     }
 
                     setTurn(prev => prev === 'A' ? 'B' : 'A');
@@ -199,31 +193,27 @@ export default function Game(): JSX.Element {
         const placed = player === 'A' ? placedShipsA : placedShipsB;
         const sunk = player === 'A' ? sunkShipsA : sunkShipsB;
 
-        for (const shipId of Object.keys(placed)) {
+        const newlySunk = computeSunkShips(placed, boardArr);
+        for (const shipId of newlySunk) {
             if (sunk[shipId]) continue; // already marked
-            const positions = placed[shipId] || [];
-            if (positions.length === 0) continue;
-            const allHit = positions.every(pos => boardArr[pos] === 'Hit');
-            if (allHit) {
-                // mark sunk
-                if (player === 'A') {
-                    setSunkShipsA(prev => ({ ...prev, [shipId]: true }));
-                } else {
-                    setSunkShipsB(prev => ({ ...prev, [shipId]: true }));
-                }
-                setLastActionMessage(`Ship ${shipId} sunk (${player})`);
+            if (player === 'A') {
+                setSunkShipsA(prev => ({ ...prev, [shipId]: true }));
+            } else {
+                setSunkShipsB(prev => ({ ...prev, [shipId]: true }));
             }
+            setLastActionMessage(`Ship ${shipId} sunk (${player})`);
         }
     }
 
     function resetBoards() {
         // use data layer to reset everything
         const res = resetAll();
-        // update in-memory state
-        setBoardAState(res.boardA);
-        setBoardBState(res.boardB);
-        setPlacedShipsA(res.placedA || {});
-        setPlacedShipsB(res.placedB || {});
+        // update in-memory state via helper
+        const normalized = computeResetState(res);
+        setBoardAState(normalized.boardA);
+        setBoardBState(normalized.boardB);
+        setPlacedShipsA(normalized.placedA || {});
+        setPlacedShipsB(normalized.placedB || {});
         setSelectedShip(null);
         setPlacingPlayer('A');
         setOrientation('horizontal');
@@ -232,8 +222,8 @@ export default function Game(): JSX.Element {
         setGameStarted(false);
         setTurn('A');
         try {
-            setScene(res.scene as Scene);
-            try { setStoredScene(res.scene as Scene); } catch {}
+            setScene(normalized.scene as Scene);
+            try { setStoredScene(normalized.scene as Scene); } catch {}
         } catch {}
 
         // clear winner and sunk markers
@@ -277,7 +267,7 @@ export default function Game(): JSX.Element {
         else setReadyB(true);
 
         // if both ready, start the game (call backend)
-        if ((player === 'A' ? true : readyA) && (player === 'B' ? true : readyB)) {
+        if (isGameReadyToStart(readyA, readyB, player)) {
             // ensure we have a game on the server
             const start = async () => {
                 try {
@@ -289,12 +279,13 @@ export default function Game(): JSX.Element {
                         }
                     }
                     const resp: any = await apiFetch(`/api/game/${gameId}/start`, { method: 'POST' });
-                    if (resp.success) {
+                    const startRes = interpretStartResponse(resp);
+                    if (startRes.started) {
                         setGameStarted(true);
                         setTurn('A');
-                        setLastActionMessage('Game started (server)');
+                        setLastActionMessage(startRes.message || 'Game started (server)');
                     } else {
-                        setLastActionMessage(resp.message || 'Could not start game');
+                        setLastActionMessage(startRes.message || 'Could not start game');
                     }
                 } catch (e) {
                     console.error('start game error', e);
@@ -313,40 +304,13 @@ export default function Game(): JSX.Element {
             return;
         }
 
-        const row = Math.floor(index / 10);
-        const col = index % 10;
-        const positions: number[] = [];
-
         const targetBoard = player === 'A' ? boardA : boardB;
-
-        if (orientationParam === 'horizontal') {
-            if (col + length > 10) {
-                console.warn('Ship does not fit horizontally from this position');
-                return;
-            }
-            // check overlap horizontally
-            for (let i = 0; i < length; i++) {
-                if (targetBoard[index + i] !== null) {
-                    console.warn('Cannot place ship: overlap at', index + i);
-                    return;
-                }
-                positions.push(index + i);
-            }
-        } else {
-            // vertical
-            if (row + length > 10) {
-                console.warn('Ship does not fit vertically from this position');
-                return;
-            }
-            for (let i = 0; i < length; i++) {
-                const pos = index + i * 10;
-                if (targetBoard[pos] !== null) {
-                    console.warn('Cannot place ship: overlap at', pos);
-                    return;
-                }
-                positions.push(pos);
-            }
+        const placement = computePlacement(index, length, orientationParam, targetBoard);
+        if (!placement.ok) {
+            console.warn(placement.reason);
+            return;
         }
+        const positions = placement.positions;
 
         const next = [...targetBoard];
         for (const p of positions) next[p] = `ship:${shipId}`;
@@ -366,13 +330,15 @@ export default function Game(): JSX.Element {
                 })
             })
             .then((resp: any) => {
+                // Interpret server response and apply minimal state changes
+                const placeResult = interpretPlaceShipResponse(resp, player, next, shipId, positions);
 
-                if (!resp.success && resp.success !== undefined) {
-                    setLastActionMessage(resp.message || 'Placement failed');
+                if (placeResult && placeResult.accepted === false) {
+                    setLastActionMessage(placeResult.message || 'Placement failed');
                     return;
                 }
 
-                // commit local state if backend accepted
+                // commit local state if backend accepted (or no explicit success flag)
                 if (player === 'A') {
                     setBoardAState(next);
                     setBoardA(next);
@@ -391,7 +357,7 @@ export default function Game(): JSX.Element {
                     });
                 }
                 setSelectedShip(null);
-                setLastActionMessage(resp.message || 'Ship placed');
+                setLastActionMessage((placeResult && placeResult.message) || resp.message || 'Ship placed');
             })
             .catch(err => {
                 console.error('Place ship error', err);
@@ -399,14 +365,15 @@ export default function Game(): JSX.Element {
             });
         } else {
             // local-only behavior: just commit
+            const localResult = applyLocalPlacement(player, shipId, positions, next);
             if (player === 'A') {
-                setBoardAState(next);
-                setBoardA(next); // persist
-                setPlacedShipsA(prev => ({ ...prev, [shipId]: positions }));
+                setBoardAState(localResult.board);
+                setBoardA(localResult.board); // persist
+                setPlacedShipsA(prev => ({ ...prev, ...localResult.placed }));
             } else {
-                setBoardBState(next);
-                setBoardB(next); // persist
-                setPlacedShipsB(prev => ({ ...prev, [shipId]: positions }));
+                setBoardBState(localResult.board);
+                setBoardB(localResult.board); // persist
+                setPlacedShipsB(prev => ({ ...prev, ...localResult.placed }));
             }
 
             setSelectedShip(null);
@@ -440,12 +407,12 @@ export default function Game(): JSX.Element {
     async function createGame(): Promise<void> {
         try {
             const resp: any = await apiFetch('/api/game/create', { method: 'POST' });
-            const id = resp.gameId || resp.game?.gameId;
-            if (id) {
-                setGameId(id);
-                setLastActionMessage(`Created game ${id}`);
+            const parsed = parseCreateGameResponse(resp);
+            if (parsed.id) {
+                setGameId(parsed.id);
+                setLastActionMessage(`Created game ${parsed.id}`);
             } else {
-                setLastActionMessage('Could not create game on server');
+                setLastActionMessage(parsed.message || 'Could not create game on server');
             }
         } catch (e) {
             console.error('createGame error', e);
@@ -470,13 +437,8 @@ export default function Game(): JSX.Element {
         value: Cell
     ): void {
         setScene(prev => {
-            const next: Scene = JSON.parse(JSON.stringify(prev));
-            if (!next[playerKey]) next[playerKey] = { board: { ships: [] }, shipsPlaced: false, ready: false, name: '', id: null } as Player;
-            if (!next[playerKey].board.ships[shipIndex]) next[playerKey].board.ships[shipIndex] = { cell: [] } as Ship;
-            if (!next[playerKey].board.ships[shipIndex].cell) next[playerKey].board.ships[shipIndex].cell = [];
-            next[playerKey].board.ships[shipIndex].cell![cellIndex] = value;
-            window.localStorage.setItem('board', JSON.stringify(next));
-            console.log("scene: ", scene);
+            const next = computeSceneWithCell(prev, playerKey, shipIndex, cellIndex, value) as Scene;
+            try { window.localStorage.setItem('board', JSON.stringify(next)); } catch {}
             return next;
         });
     }
