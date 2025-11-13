@@ -8,12 +8,12 @@ import { describe, test, expect, jest } from '@jest/globals';
 describe('Cell component renderContent', () => {
   const mockPlayer: Player = "A";
 
-  test('renders children when revealShips is true', () => {
+  test('renders children when revealShips is true and value is not special', () => {
     render(
       <Cell
         index={0}
         player={mockPlayer}
-        value="Hit"
+        value="other"
         updateBoard={() => {}}
         revealShips
       >
@@ -36,6 +36,34 @@ describe('Cell component renderContent', () => {
     );
 
     expect(screen.getByText('🚢')).toBeTruthy();
+  });
+
+  test('renders hit emoji when value is Hit and revealShips is true', () => {
+    render(
+      <Cell
+        index={0}
+        player={mockPlayer}
+        value="Hit"
+        updateBoard={() => {}}
+        revealShips
+      />
+    );
+
+    expect(screen.getByText('💥')).toBeTruthy();
+  });
+
+  test('renders O when value is Miss and revealShips is true', () => {
+    render(
+      <Cell
+        index={0}
+        player={mockPlayer}
+        value="Miss"
+        updateBoard={() => {}}
+        revealShips
+      />
+    );
+
+    expect(screen.getByText('O')).toBeTruthy();
   });
 
   test('renders "X" when isAttackView and value is "Attck"', () => {
@@ -144,13 +172,37 @@ describe('Cell component renderContent', () => {
         placingShipId="carrier"
         placingShipLength={5}
         onPlaceShip={mockOnPlaceShip}
+        orientation="horizontal"
       />
     );
 
     fireEvent.click(screen.getByRole('button'));
 
-    expect(mockOnPlaceShip).toHaveBeenCalledWith(10, mockPlayer, 'carrier', 5);
+    expect(mockOnPlaceShip).toHaveBeenCalledWith(10, mockPlayer, 'carrier', 5, 'horizontal');
     expect(mockUpdateBoard).not.toHaveBeenCalled();
+  });
+
+  test('calls onPlaceShip with vertical orientation', () => {
+    const mockOnPlaceShip = jest.fn();
+    const mockUpdateBoard = jest.fn();
+    
+    render(
+      <Cell
+        index={10}
+        player={mockPlayer}
+        value={null}
+        updateBoard={mockUpdateBoard}
+        isPlacementMode={true}
+        placingShipId="battleship"
+        placingShipLength={4}
+        onPlaceShip={mockOnPlaceShip}
+        orientation="vertical"
+      />
+    );
+
+    fireEvent.click(screen.getByRole('button'));
+
+    expect(mockOnPlaceShip).toHaveBeenCalledWith(10, mockPlayer, 'battleship', 4, 'vertical');
   });
 
   test('does not call onPlaceShip when not in placement mode', () => {
@@ -197,5 +249,82 @@ describe('Cell component renderContent', () => {
     expect(mockOnPlaceShip).not.toHaveBeenCalled();
     expect(mockUpdateBoard).toHaveBeenCalled();
   });
+
+  test('applies sunk class when isSunk is true', () => {
+    render(
+      <Cell
+        index={0}
+        player={mockPlayer}
+        value="Hit"
+        updateBoard={() => {}}
+        isSunk={true}
+      />
+    );
+
+    const button = screen.getByRole('button');
+    expect(button.className).toContain('sunk');
+  });
+
+  test('does not apply sunk class when isSunk is false', () => {
+    render(
+      <Cell
+        index={0}
+        player={mockPlayer}
+        value="Hit"
+        updateBoard={() => {}}
+        isSunk={false}
+      />
+    );
+
+    const button = screen.getByRole('button');
+    expect(button.className).toBe('cell');
+  });
+
+  test('renders null value correctly', () => {
+    render(
+      <Cell
+        index={0}
+        player={mockPlayer}
+        value={null}
+        updateBoard={() => {}}
+      />
+    );
+
+    const button = screen.getByRole('button');
+    expect(button).toBeTruthy();
+  });
+
+  test('handles player B correctly', () => {
+    const mockUpdateBoard = jest.fn();
+    
+    render(
+      <Cell
+        index={15}
+        player="B"
+        value={null}
+        updateBoard={mockUpdateBoard}
+      />
+    );
+
+    fireEvent.click(screen.getByRole('button'));
+
+    expect(mockUpdateBoard).toHaveBeenCalledWith(15, 'B', 'attack');
+  });
+
+  test('renders empty cell in attack view with null value', () => {
+    render(
+      <Cell
+        index={0}
+        player={mockPlayer}
+        value={null}
+        updateBoard={() => {}}
+        isAttackView
+      />
+    );
+
+    const button = screen.getByRole('button');
+    expect(button.textContent).toBe('');
+  });
 });
+
 
