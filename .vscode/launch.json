@@ -1,0 +1,44 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "type": "java",
+      "name": "Spring Boot Backend",
+      "request": "launch",
+      "cwd": "${workspaceFolder}",
+      "mainClass": "com.battlenet.backend.BackendApplication",
+      "projectName": "backend",
+      "args": "",
+      "envFile": "${workspaceFolder}/.env",
+      "vmArgs": "-Dspring.profiles.active=dev"
+    },
+    {
+      "type": "node",
+      "name": "Vite Frontend",
+      "request": "launch",
+      "cwd": "${workspaceFolder}/frontend",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev"],
+      "serverReadyAction": {
+        "pattern": "Local:\\s+(https?://\\S+)",
+        "uriFormat": "%s",
+        "action": "openExternally"
+      },
+      "skipFiles": ["<node_internals>/**"],
+      "console": "integratedTerminal"
+    }
+  ],
+  "compounds": [
+    {
+      "name": "Frontend + Backend",
+      "configurations": ["Spring Boot Backend", "Vite Frontend"],
+      "stopAll": true,
+      "preLaunchTask": "",
+      "presentation": {
+        "hidden": false,
+        "group": "fullstack",
+        "order": 1
+      }
+    }
+  ]
+}
