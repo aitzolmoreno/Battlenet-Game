@@ -1,6 +1,20 @@
 import React, { useEffect, useState, type JSX } from 'react';
 import Board from '../../components/Board';
 import './Game.css';
+import {
+    getBoardA,
+    setBoardA,
+    getBoardB,
+    setBoardB,
+    getScene as getStoredScene,
+    setScene as setStoredScene,
+    getPlacedShips,
+    setPlacedShips,
+    resetAll,
+    DEFAULT_SCENE,
+} from '../../lib/data';
+
+import { apiFetch } from '../../lib/api';
 
 export type PlayerA = "A" | "B";
 
@@ -37,34 +51,12 @@ interface Scene {
 
 export default function Game(): JSX.Element {
 
-    const [boardA, setBoardA] = useState<(string | null)[]>(() => {
-    try {
-        const loadBoard = window.localStorage.getItem("boardA");
-        const parsed = loadBoard ? JSON.parse(loadBoard) : null;
-        if (Array.isArray(parsed) && parsed.length === 100) return parsed;
-    } catch (e) {
-        console.warn('Error parsing boardA from localStorage:', e);
-    }
-    const defaultBoardA = Array(100).fill(null); // tablero 10x10
-    // normalizar en localStorage para evitar reutilizar datos antiguos
-    try { window.localStorage.setItem('boardA', JSON.stringify(defaultBoardA)); } catch {}
-    return defaultBoardA;
-    });
+    const [boardA, setBoardAState] = useState<(string | null)[]>(() => getBoardA());
 
-    const [boardB, setBoardB] = useState<(string | null)[]>(() => {
-    try {
-        const loadBoard = window.localStorage.getItem("boardB");
-        const parsed = loadBoard ? JSON.parse(loadBoard) : null;
-        if (Array.isArray(parsed) && parsed.length === 100) return parsed;
-    } catch (e) {
-        console.warn('Error parsing boardB from localStorage:', e);
-    }
-    const defaultBoardB = Array(100).fill(null);
-    try { window.localStorage.setItem('boardB', JSON.stringify(defaultBoardB)); } catch {}
-    return defaultBoardB;
-    });
+    const [boardB, setBoardBState] = useState<(string | null)[]>(() => getBoardB());
 
     const [turn, setTurn] = useState<PlayerA>("A");
+    const [gameId, setGameId] = useState<string | null>(null);
 
     // lista de barcos
     const shipsCatalog = [
@@ -75,33 +67,120 @@ export default function Game(): JSX.Element {
         { id: 'destroyer', name: 'Destroyer', length: 2 },
     ];
 
-    // Track placed ships for player A (simple map: shipId -> positions[])
-    const [placedShipsA, setPlacedShipsA] = useState<Record<string, number[]>>({});
+    // Track placed ships for players (simple map: shipId -> positions[])
+    const [placedShipsA, setPlacedShipsA] = useState<Record<string, number[]>>(() => getPlacedShips('A'));
+    const [placedShipsB, setPlacedShipsB] = useState<Record<string, number[]>>(() => getPlacedShips('B'));
     const [selectedShip, setSelectedShip] = useState<{id: string; name: string; length: number} | null>(null);
+    const [placingPlayer, setPlacingPlayer] = useState<PlayerA>('A');
+    const [orientation, setOrientation] = useState<'horizontal' | 'vertical'>('horizontal');
+    const [readyA, setReadyA] = useState(false);
+    const [readyB, setReadyB] = useState(false);
+    const [gameStarted, setGameStarted] = useState(false);
+    const [lastActionMessage, setLastActionMessage] = useState<string | null>(null);
 
     function updateBoard(index: number, player: PlayerA, action: string) {
+        // only allow attacks when the game has started
+        if (action === 'attack' && !gameStarted) {
+            console.warn('Cannot attack: game has not started yet');
+            return;
+        }
+
+        // ensure it's the player's turn
         if (player !== turn) return;
 
         if (action === "attack") {
+            // target board is opponent's defense board
+            const opponent = player === 'A' ? 'B' : 'A';
             const targetBoard = player === "A" ? [...boardB] : [...boardA];
-            targetBoard[index] = "Attck"; //en este caso hemos puesto que haga ataque, pero deberiamos de poner mas cosas
-            player === "A" ? setBoardB(targetBoard) : setBoardA(targetBoard);
-        }
 
-        setTurn(turn === "A" ? "B" : "A");
+            const current = targetBoard[index];
+            // prevent attacking same cell twice
+            if (current === 'Hit' || current === 'Miss') {
+                setLastActionMessage('Already attacked this cell');
+                return;
+            }
+
+            // compute coordinates
+            const row = Math.floor(index / 10);
+            const col = index % 10;
+
+            if (gameId) {
+                apiFetch(`/api/game/${gameId}/shoot`, {
+                    method: 'POST',
+                    body: JSON.stringify({ x: row, y: col }),
+                })
+                .then((resp: any) => {
+                    const result = resp.result;
+                    if (typeof result === 'string' && result.toLowerCase().includes('hit')) {
+                        targetBoard[index] = 'Hit';
+                        setLastActionMessage(`Player ${player} HIT ${opponent} at ${index}`);
+                    } else {
+                        targetBoard[index] = 'Miss';
+                        setLastActionMessage(`Player ${player} missed at ${index}`);
+                    }
+
+                    if (player === 'A') {
+                        setBoardBState(targetBoard);
+                        setBoardB(targetBoard);
+                    } else {
+                        setBoardAState(targetBoard);
+                        setBoardA(targetBoard);
+                    }
+
+                    if (resp.currentTurn) {
+                        setTurn(resp.currentTurn === 'player1' ? 'A' : 'B');
+                    }
+                })
+                .catch(err => {
+                    console.error('Error shooting', err);
+                    setLastActionMessage('Error contacting server');
+                });
+            } else {
+                // fallback local behavior
+                if (typeof current === 'string' && current.startsWith('ship:')) {
+                    targetBoard[index] = 'Hit';
+                    setLastActionMessage(`Player ${player} HIT ${opponent} at ${index}`);
+                } else {
+                    targetBoard[index] = 'Miss';
+                    setLastActionMessage(`Player ${player} missed at ${index}`);
+                }
+
+                if (player === 'A') {
+                    setBoardBState(targetBoard);
+                    setBoardB(targetBoard);
+                } else {
+                    setBoardAState(targetBoard);
+                    setBoardA(targetBoard);
+                }
+
+                setTurn(prev => prev === 'A' ? 'B' : 'A');
+            }
+        }
     }
 
     function resetBoards() {
-        const empty = Array(100).fill(null);
+        // use data layer to reset everything
+        const res = resetAll();
+        // update in-memory state
+        setBoardAState(res.boardA);
+        setBoardBState(res.boardB);
+        setPlacedShipsA(res.placedA || {});
+        setPlacedShipsB(res.placedB || {});
+        setSelectedShip(null);
+        setPlacingPlayer('A');
+        setOrientation('horizontal');
+        setReadyA(false);
+        setReadyB(false);
+        setGameStarted(false);
+        setTurn('A');
         try {
-            window.localStorage.setItem('boardA', JSON.stringify(empty));
-            window.localStorage.setItem('boardB', JSON.stringify(empty));
-        } catch (e) {
-            console.warn('Could not write localStorage during reset:', e);
-        }
-        setBoardA([...empty]);
-        setBoardB([...empty]);
-        console.log('Boards reset to empty 10x10');
+            setScene(res.scene as Scene);
+            try { setStoredScene(res.scene as Scene); } catch {}
+        } catch {}
+
+        console.log('Boards and game state reset to initial values (via data layer)');
+        // create a fresh backend game as well
+        try { createGame(); } catch {}
     }
 
     function selectShipToPlace(shipId: string, name: string, length: number) {
@@ -110,153 +189,206 @@ export default function Game(): JSX.Element {
             setSelectedShip(null);
             return;
         }
-        // don't allow re-selecting an already placed ship
-        if (placedShipsA[shipId]) {
-            console.warn('Ship already placed:', shipId);
+        // don't allow re-selecting an already placed ship for the current placing player
+        const already = placingPlayer === 'A' ? placedShipsA[shipId] : placedShipsB[shipId];
+        if (already) {
+            console.warn('Ship already placed for player', placingPlayer, shipId);
             return;
         }
         setSelectedShip({ id: shipId, name, length });
     }
 
-    function placeShip(index: number, player: PlayerA, shipId: string, length: number) {
-        // only allow placing on player A's defense board in this simple UI
-        if (player !== 'A') return;
+    function allPlacedForPlayer(player: PlayerA) {
+        return shipsCatalog.every(s => {
+            const record = player === 'A' ? placedShipsA : placedShipsB;
+            return !!record[s.id];
+        });
+    }
+
+    function finishPlacing(player: PlayerA) {
+        if (!allPlacedForPlayer(player)) {
+            console.warn('Not all ships placed for', player);
+            return;
+        }
+        if (player === 'A') setReadyA(true);
+        else setReadyB(true);
+
+        // if both ready, start the game (call backend)
+        if ((player === 'A' ? true : readyA) && (player === 'B' ? true : readyB)) {
+            // ensure we have a game on the server
+            const start = async () => {
+                try {
+                    if (!gameId) {
+                        await createGame();
+                        if (!gameId) {
+                            setLastActionMessage('Unable to create game on server');
+                            return;
+                        }
+                    }
+                    const resp: any = await apiFetch(`/api/game/${gameId}/start`, { method: 'POST' });
+                    if (resp.success) {
+                        setGameStarted(true);
+                        setTurn('A');
+                        setLastActionMessage('Game started (server)');
+                    } else {
+                        setLastActionMessage(resp.message || 'Could not start game');
+                    }
+                } catch (e) {
+                    console.error('start game error', e);
+                    setLastActionMessage('Error starting game on server');
+                }
+            };
+            start();
+        }
+    }
+
+    function placeShip(index: number, player: PlayerA, shipId: string, length: number, orientationParam: 'horizontal' | 'vertical' = orientation) {
+        // only allow placing on the currently selected placing player
+        if (player !== placingPlayer) return;
         if (!selectedShip || selectedShip.id !== shipId) {
             console.warn('No ship selected or mismatch');
             return;
         }
 
+        const row = Math.floor(index / 10);
         const col = index % 10;
-        if (col + length > 10) {
-            console.warn('Ship does not fit horizontally from this position');
-            return;
-        }
+        const positions: number[] = [];
 
-        // check overlap
-        for (let i = 0; i < length; i++) {
-            if (boardA[index + i] !== null) {
-                console.warn('Cannot place ship: overlap at', index + i);
+        const targetBoard = player === 'A' ? boardA : boardB;
+
+        if (orientationParam === 'horizontal') {
+            if (col + length > 10) {
+                console.warn('Ship does not fit horizontally from this position');
                 return;
+            }
+            // check overlap horizontally
+            for (let i = 0; i < length; i++) {
+                if (targetBoard[index + i] !== null) {
+                    console.warn('Cannot place ship: overlap at', index + i);
+                    return;
+                }
+                positions.push(index + i);
+            }
+        } else {
+            // vertical
+            if (row + length > 10) {
+                console.warn('Ship does not fit vertically from this position');
+                return;
+            }
+            for (let i = 0; i < length; i++) {
+                const pos = index + i * 10;
+                if (targetBoard[pos] !== null) {
+                    console.warn('Cannot place ship: overlap at', pos);
+                    return;
+                }
+                positions.push(pos);
             }
         }
 
-        const next = [...boardA];
-        const positions: number[] = [];
-        for (let i = 0; i < length; i++) {
-            next[index + i] = `ship:${shipId}`;
-            positions.push(index + i);
-        }
+        const next = [...targetBoard];
+        for (const p of positions) next[p] = `ship:${shipId}`;
 
-        try { window.localStorage.setItem('boardA', JSON.stringify(next)); } catch {}
-        setBoardA(next);
-        setPlacedShipsA(prev => ({ ...prev, [shipId]: positions }));
-        setSelectedShip(null);
-        console.log(`Placed ${shipId} at`, positions);
+        // If we have a backend game, call place-ship endpoint first
+        if (gameId) {
+            const row = Math.floor(index / 10);
+            const col = index % 10;
+            apiFetch(`/api/game/${gameId}/place-ship`, {
+                method: 'POST',
+                body: JSON.stringify({
+                    player: player === 'A' ? 1 : 2,
+                    shipType: shipId.toString().toUpperCase(),
+                    x: row,
+                    y: col,
+                    horizontal: orientationParam === 'horizontal'
+                })
+            })
+            .then((resp: any) => {
+
+                if (!resp.success && resp.success !== undefined) {
+                    setLastActionMessage(resp.message || 'Placement failed');
+                    return;
+                }
+
+                // commit local state if backend accepted
+                if (player === 'A') {
+                    setBoardAState(next);
+                    setBoardA(next);
+                    setPlacedShipsA(prev => {
+                        const newPlaced = { ...prev, [shipId]: positions };
+                        try { setPlacedShips('A', newPlaced); } catch {}
+                        return newPlaced;
+                    });
+                } else {
+                    setBoardBState(next);
+                    setBoardB(next);
+                    setPlacedShipsB(prev => {
+                        const newPlaced = { ...prev, [shipId]: positions };
+                        try { setPlacedShips('B', newPlaced); } catch {}
+                        return newPlaced;
+                    });
+                }
+                setSelectedShip(null);
+                setLastActionMessage(resp.message || 'Ship placed');
+            })
+            .catch(err => {
+                console.error('Place ship error', err);
+                setLastActionMessage('Error contacting server');
+            });
+        } else {
+            // local-only behavior: just commit
+            if (player === 'A') {
+                setBoardAState(next);
+                setBoardA(next); // persist
+                setPlacedShipsA(prev => ({ ...prev, [shipId]: positions }));
+            } else {
+                setBoardBState(next);
+                setBoardB(next); // persist
+                setPlacedShipsB(prev => ({ ...prev, [shipId]: positions }));
+            }
+
+            setSelectedShip(null);
+            console.log(`Placed ${shipId} for player ${player} at`, positions);
+        }
     }
 
 
-    const url = '/data/scene.json';
-
-    const defaultScene: Scene = {
-        player1: {
-            board: { ships: [] },
-            shipsPlaced: false,
-            ready: false,
-            name: '',
-            id: null
-        },
-        player2: {
-            board: { ships: [] },
-            shipsPlaced: false,
-            ready: false,
-            name: '',
-            id: null
-        },
-        gameId: '',
-        currentTurn: 'player1',
-        winner: null,
-        state: ''
-    };
+    // default scene moved to data layer (DEFAULT_SCENE)
 
     const [scene, setScene] = useState<Scene>(() => {
         try {
-            if (typeof window === 'undefined') return defaultScene;
-            const raw = window.localStorage.getItem('board');
-            return raw ? (JSON.parse(raw) as Scene) : defaultScene;
+            const stored = getStoredScene();
+            return stored ? (stored as Scene) : (DEFAULT_SCENE as Scene);
         } catch (e) {
-            console.error('Error parsing localStorage:', e);
-            return defaultScene;
+            console.error('Error getting stored scene:', e);
+            return DEFAULT_SCENE as Scene;
         }
     });
 
     useEffect(() => {
+        // scene is initialized from the data layer (getStoredScene) on mount.
+        // Keep this effect minimal for now; it can be expanded to fetch/normalize
+        // remote scene data later if needed.
+        // create a backend game when the component mounts (dev convenience)
+        createGame();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
-        function normalizeScene(data: any): Scene {
-            if (!data || !data.game) {
-                // fallback a default
-                return {
-                    gameId: '',
-                    currentTurn: 'player1',
-                    winner: null,
-                    state: '',
-                    player1: { shipsPlaced: false, ready: false, name: '', id: null, board: { ships: [] } },
-                    player2: { shipsPlaced: false, ready: false, name: '', id: null, board: { ships: [] } },
-                };
+    // create a backend game and set gameId
+    async function createGame(): Promise<void> {
+        try {
+            const resp: any = await apiFetch('/api/game/create', { method: 'POST' });
+            const id = resp.gameId || resp.game?.gameId;
+            if (id) {
+                setGameId(id);
+                setLastActionMessage(`Created game ${id}`);
+            } else {
+                setLastActionMessage('Could not create game on server');
             }
-
-            const g = data.game;
-
-            const scene: Scene = {
-                gameId: data.gameId || g.gameId || '',
-                currentTurn: g.currentTurn || 'player1',
-                winner: g.winner ?? null,
-                state: g.state || '',
-                player1: {
-                    shipsPlaced: g.player1?.shipsPlaced ?? false,
-                    ready: g.player1?.ready ?? false,
-                    name: g.player1?.name || 'player1',
-                    id: g.player1?.id ?? null,
-                    board: { ships: [] }, // por ahora vacío, puedes poblarlo después
-                },
-                player2: {
-                    shipsPlaced: g.player2?.shipsPlaced ?? false,
-                    ready: g.player2?.ready ?? false,
-                    name: g.player2?.name || 'player2',
-                    id: g.player2?.id ?? null,
-                    board: { ships: [] },
-                }
-            };
-
-            return scene;
+        } catch (e) {
+            console.error('createGame error', e);
+            setLastActionMessage('Error creating game on server');
         }
-
-
-        async function fetchScene(): Promise<void> {
-            try {
-                const response = await fetch("http://localhost:8080/api/game/create", {
-                    method: "POST", // <- changed from GET to POST
-                    headers: {
-                        "Content-Type": "application/json", // <- set if sending JSON
-                    },
-                    body: JSON.stringify({ /* any payload you want to send */ })
-                });
-
-                if (!response.ok) throw new Error(`Error al cargar el JSON: ${response.status}`);
-                const data = await response.json();
-
-                const normalized = normalizeScene(data);
-                setScene(normalized);
-                window.localStorage.setItem('board', JSON.stringify(normalized));
-                console.log('normalized scene:', normalized);
-
-            } catch (error) {
-                console.error(error);
-            }
-        }
-        fetchScene();
-
-        return () => { /* cleanup */ };
-    }, [url]);
+    }
 
     // Safe getter
     function getCell(
@@ -292,35 +424,76 @@ export default function Game(): JSX.Element {
             <header>
                 <h1 className="text-2xl font-bold">Battlenet Game</h1>
                 <div className="header-actions">
-                    <button className="mt-2 mr-2 px-3 py-1 rounded bg-blue-600 text-white">Attack</button>
                     <button onClick={resetBoards} className="mt-2 px-3 py-1 rounded border">Reset boards</button>
                 </div>
 
-                <div className="ships-setup mt-4">
-                    <h3 className="mb-2">Ships to place (Player A)</h3>
-                    <div className="ships-list flex gap-2">
-                        {shipsCatalog.map(s => (
-                            <div key={s.id} className="p-2 border rounded">
-                                <div><strong>{s.name}</strong> ({s.length})</div>
-                                <div className="mt-1">
-                                    {placedShipsA[s.id] ? (
-                                        <span className="text-sm text-green-600">Placed</span>
-                                    ) : (
-                                        <button className="px-2 py-1 rounded border" onClick={() => selectShipToPlace(s.id, s.name, s.length)}>
-                                            {selectedShip?.id === s.id ? 'Selected' : 'Select'}
-                                        </button>
-                                    )}
-                                </div>
-                            </div>
-                        ))}
+                    <div className="ships-setup mt-4">
+                    <h3 className="mb-2">Ships to place (Player {placingPlayer})</h3>
+                        {lastActionMessage && (
+                            <div className="mt-2 text-sm text-gray-700">{lastActionMessage}</div>
+                        )}
+                    <div className="ships-controls mb-2 flex items-center gap-3">
+                        <div>
+                            <label className="text-sm mr-2">Player:</label>
+                            <button className={`px-2 py-1 rounded border ${placingPlayer === 'A' ? 'selected' : ''}`} onClick={() => setPlacingPlayer('A')}>A</button>
+                            <button className={`px-2 py-1 rounded border ${placingPlayer === 'B' ? 'selected' : ''} ml-2`} onClick={() => setPlacingPlayer('B')}>B</button>
+                        </div>
+                        <div>
+                            <label className="text-sm mr-2">Ships Orientation:</label>
+                            <button
+                                className={`px-2 py-1 rounded border ${orientation === 'horizontal' ? 'selected' : ''}`}
+                                onClick={() => setOrientation('horizontal')}
+                            >
+                                Horizontal
+                            </button>
+                            <button
+                                className={`px-2 py-1 rounded border ${orientation === 'vertical' ? 'selected' : ''} ml-2`}
+                                onClick={() => setOrientation('vertical')}
+                            >
+                                Vertical
+                            </button>
+                        </div>
+                        <div>
+                            <button
+                                className="ml-4 px-3 py-1 rounded border bg-green-50"
+                                onClick={() => finishPlacing(placingPlayer)}
+                                disabled={!allPlacedForPlayer(placingPlayer) || (placingPlayer === 'A' ? readyA : readyB)}
+                            >
+                                {placingPlayer === 'A' ? (readyA ? 'Placed' : 'Done placing (A)') : (readyB ? 'Placed' : 'Done placing (B)')}
+                            </button>
+                        </div>
                     </div>
+
+                    <div className="ships-list flex gap-2">
+                        {shipsCatalog.map(s => {
+                            const isPlaced = placingPlayer === 'A' ? placedShipsA[s.id] : placedShipsB[s.id];
+                            return (
+                                <div key={s.id} className="p-2 border rounded">
+                                    <div><strong>{s.name}</strong> ({s.length})</div>
+                                    <div className="mt-1">
+                                        {isPlaced ? (
+                                            <span className="text-sm text-green-600">Placed</span>
+                                        ) : (
+                                            <button
+                                                className={`px-2 py-1 rounded border ${selectedShip?.id === s.id ? 'selected' : ''}`}
+                                                onClick={() => selectShipToPlace(s.id, s.name, s.length)}
+                                            >
+                                                {selectedShip?.id === s.id ? 'Selected' : 'Select'}
+                                            </button>
+                                        )}
+                                    </div>
+                                </div>
+                            );
+                        })}
+                    </div>
+
                 </div>
 
                 
             </header>
             <section className="game">
                 <div className="boards-grid">
-                    <div className="player-column">
+                    <div className={`player-column ${gameStarted && turn === 'A' ? 'active' : ''}`}>
                         <h2 className="player-title">Player A</h2>
                         <div className="board-wrapper">
                             <div className="board-label">A - Defensa</div>
@@ -333,6 +506,7 @@ export default function Game(): JSX.Element {
                                 placingShipId={selectedShip?.id ?? null}
                                 placingShipLength={selectedShip?.length ?? 0}
                                 onPlaceShip={placeShip}
+                                orientation={orientation}
                             />
                         </div>
 
@@ -342,7 +516,7 @@ export default function Game(): JSX.Element {
                         </div>
                     </div>
 
-                    <div className="player-column">
+                    <div className={`player-column ${gameStarted && turn === 'B' ? 'active' : ''}`}>
                         <h2 className="player-title">Player B</h2>
                         <div className="board-wrapper">
                             <div className="board-label">A - Defensa</div>
@@ -355,6 +529,7 @@ export default function Game(): JSX.Element {
                                 placingShipId={selectedShip?.id ?? null}
                                 placingShipLength={selectedShip?.length ?? 0}
                                 onPlaceShip={placeShip}
+                                orientation={orientation}
                             />
                         </div>
 

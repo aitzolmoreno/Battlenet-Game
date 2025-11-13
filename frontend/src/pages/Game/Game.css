@@ -83,11 +83,59 @@
     font-weight:600;
 }
 
+/* General selected button style (applies to player/orientation/other buttons) */
+button.selected, .btn-selected {
+    background: linear-gradient(90deg, rgba(37,99,235,0.12), rgba(37,99,235,0.06));
+    border-color: var(--accent);
+    color: var(--accent);
+    font-weight: 600;
+    box-shadow: 0 8px 20px rgba(37,99,235,0.06);
+}
+
 /* pequeño helper para etiquetas/labels */
 .board-label{
     font-size:0.9rem;
     color:var(--muted);
     margin-bottom:0.4rem;
+}
+
+/* Header layout: make title + actions stretch nicely */
+.header{
+    display:flex;
+    align-items:center;
+    gap:1rem;
+    width:100%;
+    flex-wrap:wrap;
+}
+
+.header > h1{
+    margin:0;
+    flex: 0 0 auto;
+}
+
+.header-actions{
+    display:flex;
+    gap:0.5rem;
+    align-items:center;
+    margin-left:auto; /* push actions to the right */
+    flex: 1 1 40%; /* allow actions container to grow and occupy available space */
+    justify-content:flex-end; /* align buttons to the right inside the actions container */
+}
+
+.header-actions button{
+    min-width:84px;
+}
+
+/* highlight active player column when it's their turn */
+.player-column.active{
+    border: 2px solid rgba(37,99,235,0.15);
+    box-shadow: 0 10px 30px rgba(37,99,235,0.06);
+    background: linear-gradient(180deg, rgba(37,99,235,0.02), transparent);
+}
+
+.player-column.active .player-title{
+    color: var(--accent);
+    font-weight:700;
 }
 
 

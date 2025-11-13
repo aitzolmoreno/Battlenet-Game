@@ -14,7 +14,8 @@ interface BoardProps {
     isPlacementMode?: boolean;
     placingShipId?: string | null;
     placingShipLength?: number;
-    onPlaceShip?: (index: number, player: Player, shipId: string, length: number) => void;
+    onPlaceShip?: (index: number, player: Player, shipId: string, length: number, orientation?: 'horizontal' | 'vertical') => void;
+    orientation?: 'horizontal' | 'vertical';
 }
 
 const Board: React.FC<BoardProps> = ({
@@ -26,7 +27,8 @@ const Board: React.FC<BoardProps> = ({
     isPlacementMode = false,
     placingShipId = null,
     placingShipLength = 0,
-    onPlaceShip
+    onPlaceShip,
+    orientation = 'horizontal'
 }) => {
     return (
         <div className="board">
@@ -46,6 +48,7 @@ const Board: React.FC<BoardProps> = ({
                         placingShipId={placingShipId}
                         placingShipLength={placingShipLength}
                         onPlaceShip={onPlaceShip}
+                        orientation={orientation}
                     >
                         {cell}
                     </Cell>
