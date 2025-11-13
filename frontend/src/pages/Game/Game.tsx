@@ -135,7 +135,7 @@ export default function Game(): JSX.Element {
                     }
 
                     // handle game over / winner from server
-                    console.log('🏆 Checking winner: isGameOver=', resp.isGameOver, 'winner=', resp.winner);
+                    console.log('Checking winner: isGameOver=', resp.isGameOver, 'winner=', resp.winner);
                     if (resp.isGameOver || resp.winner) {
                         const winName = resp.winner || null;
                         console.log('Setting winner to:', winName);
@@ -150,7 +150,7 @@ export default function Game(): JSX.Element {
                                             const positions = opponentPlaced[shipId] || [];
                                             return positions.every(pos => targetBoard[pos] === 'Hit');
                                         });
-                        console.log('🔍 Local check: all ships sunk?', allSunk);
+                        console.log('Local check: all ships sunk?', allSunk);
                         if (allSunk) {
                             // local detection: this player won
                             const winnerName = player === 'A' ? 'player1' : 'player2';

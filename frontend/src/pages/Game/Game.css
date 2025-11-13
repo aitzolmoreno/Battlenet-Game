@@ -167,7 +167,7 @@ button.selected, .btn-selected {
     z-index:60;
 }
 .modal{
-    background:white;
+    background:rgb(65, 65, 65);
     padding:1.25rem;
     border-radius:8px;
     width:min(520px, 90%);
