@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<coverage generated="1763105319199" clover="3.2.0">
-  <project timestamp="1763105319200" name="All files">
+<coverage generated="1763105795953" clover="3.2.0">
+  <project timestamp="1763105795953" name="All files">
     <metrics statements="442" coveredstatements="363" conditionals="354" coveredconditionals="269" methods="82" coveredmethods="67" elements="878" coveredelements="699" complexity="0" loc="442" ncloc="442" packages="7" files="11" classes="11"/>
     <package name="src">
       <metrics statements="12" coveredstatements="12" conditionals="0" coveredconditionals="0" methods="1" coveredmethods="1"/>
-      <file name="App.tsx" path="C:\Users\aitzo\1.KUATRI\SoftwareEngineering\Battlenet Game\frontend\src\App.tsx">
+      <file name="App.tsx" path="C:\Users\mikel\Desktop\Uni\3_maila\1_Sehilekoa\4_Software_Engineering\05_Git\Proiektua\Battlenet-Game\frontend\src\App.tsx">
         <metrics statements="7" coveredstatements="7" conditionals="0" coveredconditionals="0" methods="1" coveredmethods="1"/>
         <line num="1" count="1" type="stmt"/>
         <line num="2" count="1" type="stmt"/>
@@ -14,7 +14,7 @@
         <line num="8" count="4" type="stmt"/>
         <line num="28" count="1" type="stmt"/>
       </file>
-      <file name="main.tsx" path="C:\Users\aitzo\1.KUATRI\SoftwareEngineering\Battlenet Game\frontend\src\main.tsx">
+      <file name="main.tsx" path="C:\Users\mikel\Desktop\Uni\3_maila\1_Sehilekoa\4_Software_Engineering\05_Git\Proiektua\Battlenet-Game\frontend\src\main.tsx">
         <metrics statements="5" coveredstatements="5" conditionals="0" coveredconditionals="0" methods="0" coveredmethods="0"/>
         <line num="1" count="1" type="stmt"/>
         <line num="2" count="1" type="stmt"/>
@@ -25,7 +25,7 @@
     </package>
     <package name="src.components">
       <metrics statements="38" coveredstatements="38" conditionals="59" coveredconditionals="56" methods="5" coveredmethods="5"/>
-      <file name="Board.tsx" path="C:\Users\aitzo\1.KUATRI\SoftwareEngineering\Battlenet Game\frontend\src\components\Board.tsx">
+      <file name="Board.tsx" path="C:\Users\mikel\Desktop\Uni\3_maila\1_Sehilekoa\4_Software_Engineering\05_Git\Proiektua\Battlenet-Game\frontend\src\components\Board.tsx">
         <metrics statements="18" coveredstatements="18" conditionals="25" coveredconditionals="23" methods="2" coveredmethods="2"/>
         <line num="1" count="6" type="stmt"/>
         <line num="2" count="6" type="stmt"/>
@@ -46,7 +46,7 @@
         <line num="62" count="41500" type="stmt"/>
         <line num="86" count="6" type="stmt"/>
       </file>
-      <file name="Cell.tsx" path="C:\Users\aitzo\1.KUATRI\SoftwareEngineering\Battlenet Game\frontend\src\components\Cell.tsx">
+      <file name="Cell.tsx" path="C:\Users\mikel\Desktop\Uni\3_maila\1_Sehilekoa\4_Software_Engineering\05_Git\Proiektua\Battlenet-Game\frontend\src\components\Cell.tsx">
         <metrics statements="20" coveredstatements="20" conditionals="34" coveredconditionals="33" methods="3" coveredmethods="3"/>
         <line num="1" count="7" type="stmt"/>
         <line num="20" count="7" type="stmt"/>
@@ -72,7 +72,7 @@
     </package>
     <package name="src.lib">
       <metrics statements="61" coveredstatements="59" conditionals="22" coveredconditionals="21" methods="11" coveredmethods="11"/>
-      <file name="api.ts" path="C:\Users\aitzo\1.KUATRI\SoftwareEngineering\Battlenet Game\frontend\src\lib\api.ts">
+      <file name="api.ts" path="C:\Users\mikel\Desktop\Uni\3_maila\1_Sehilekoa\4_Software_Engineering\05_Git\Proiektua\Battlenet-Game\frontend\src\lib\api.ts">
         <metrics statements="11" coveredstatements="11" conditionals="8" coveredconditionals="8" methods="1" coveredmethods="1"/>
         <line num="4" count="7" type="stmt"/>
         <line num="5" count="65" type="cond" truecount="2" falsecount="0"/>
@@ -86,7 +86,7 @@
         <line num="23" count="61" type="cond" truecount="2" falsecount="0"/>
         <line num="26" count="1" type="stmt"/>
       </file>
-      <file name="data.ts" path="C:\Users\aitzo\1.KUATRI\SoftwareEngineering\Battlenet Game\frontend\src\lib\data.ts">
+      <file name="data.ts" path="C:\Users\mikel\Desktop\Uni\3_maila\1_Sehilekoa\4_Software_Engineering\05_Git\Proiektua\Battlenet-Game\frontend\src\lib\data.ts">
         <metrics statements="50" coveredstatements="48" conditionals="14" coveredconditionals="13" methods="10" coveredmethods="10"/>
         <line num="2" count="6" type="stmt"/>
         <line num="3" count="6" type="stmt"/>
@@ -142,7 +142,7 @@
     </package>
     <package name="src.pages">
       <metrics statements="10" coveredstatements="10" conditionals="0" coveredconditionals="0" methods="5" coveredmethods="5"/>
-      <file name="ConnectivityTest.tsx" path="C:\Users\aitzo\1.KUATRI\SoftwareEngineering\Battlenet Game\frontend\src\pages\ConnectivityTest.tsx">
+      <file name="ConnectivityTest.tsx" path="C:\Users\mikel\Desktop\Uni\3_maila\1_Sehilekoa\4_Software_Engineering\05_Git\Proiektua\Battlenet-Game\frontend\src\pages\ConnectivityTest.tsx">
         <metrics statements="10" coveredstatements="10" conditionals="0" coveredconditionals="0" methods="5" coveredmethods="5"/>
         <line num="1" count="2" type="stmt"/>
         <line num="4" count="7" type="stmt"/>
@@ -158,7 +158,7 @@
     </package>
     <package name="src.pages.Game">
       <metrics statements="317" coveredstatements="240" conditionals="273" coveredconditionals="192" methods="59" coveredmethods="44"/>
-      <file name="Game.tsx" path="C:\Users\aitzo\1.KUATRI\SoftwareEngineering\Battlenet Game\frontend\src\pages\Game\Game.tsx">
+      <file name="Game.tsx" path="C:\Users\mikel\Desktop\Uni\3_maila\1_Sehilekoa\4_Software_Engineering\05_Git\Proiektua\Battlenet-Game\frontend\src\pages\Game\Game.tsx">
         <metrics statements="227" coveredstatements="150" conditionals="172" coveredconditionals="104" methods="42" coveredmethods="27"/>
         <line num="1" count="6" type="stmt"/>
         <line num="2" count="6" type="stmt"/>
@@ -388,7 +388,7 @@
         <line num="512" count="1045" type="stmt"/>
         <line num="521" count="23" type="stmt"/>
       </file>
-      <file name="helpers.ts" path="C:\Users\aitzo\1.KUATRI\SoftwareEngineering\Battlenet Game\frontend\src\pages\Game\helpers.ts">
+      <file name="helpers.ts" path="C:\Users\mikel\Desktop\Uni\3_maila\1_Sehilekoa\4_Software_Engineering\05_Git\Proiektua\Battlenet-Game\frontend\src\pages\Game\helpers.ts">
         <metrics statements="90" coveredstatements="90" conditionals="101" coveredconditionals="88" methods="17" coveredmethods="17"/>
         <line num="3" count="15" type="stmt"/>
         <line num="4" count="10" type="stmt"/>
@@ -484,7 +484,7 @@
     </package>
     <package name="src.pages.Home">
       <metrics statements="3" coveredstatements="3" conditionals="0" coveredconditionals="0" methods="1" coveredmethods="1"/>
-      <file name="Home.tsx" path="C:\Users\aitzo\1.KUATRI\SoftwareEngineering\Battlenet Game\frontend\src\pages\Home\Home.tsx">
+      <file name="Home.tsx" path="C:\Users\mikel\Desktop\Uni\3_maila\1_Sehilekoa\4_Software_Engineering\05_Git\Proiektua\Battlenet-Game\frontend\src\pages\Home\Home.tsx">
         <metrics statements="3" coveredstatements="3" conditionals="0" coveredconditionals="0" methods="1" coveredmethods="1"/>
         <line num="1" count="2" type="stmt"/>
         <line num="4" count="4" type="stmt"/>
@@ -493,7 +493,7 @@
     </package>
     <package name="test.mocks">
       <metrics statements="1" coveredstatements="1" conditionals="0" coveredconditionals="0" methods="0" coveredmethods="0"/>
-      <file name="styleMock.js" path="C:\Users\aitzo\1.KUATRI\SoftwareEngineering\Battlenet Game\frontend\test\mocks\styleMock.js">
+      <file name="styleMock.js" path="C:\Users\mikel\Desktop\Uni\3_maila\1_Sehilekoa\4_Software_Engineering\05_Git\Proiektua\Battlenet-Game\frontend\test\mocks\styleMock.js">
         <metrics statements="1" coveredstatements="1" conditionals="0" coveredconditionals="0" methods="0" coveredmethods="0"/>
         <line num="1" count="8" type="stmt"/>
       </file>
