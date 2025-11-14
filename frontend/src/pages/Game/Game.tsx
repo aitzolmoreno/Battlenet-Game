@@ -563,7 +563,7 @@ export default function Game(): JSX.Element {
                     <div className={`player-column ${gameStarted && turn === 'B' ? 'active' : ''}`}>
                         <h2 className="player-title">Player B</h2>
                         <div className="board-wrapper">
-                            <div className="board-label">A - Defensa</div>
+                            <div className="board-label">B - Defensa</div>
                             <Board
                                 player="B"
                                 board={boardB}
