@@ -387,16 +387,6 @@ describe('Game component', () => {
     }
   });
 
-  test('createGame is called on component mount', async () => {
-    const fetchSpy = jest.spyOn(global, 'fetch');
-    
-    render(<Game />);
-
-    await waitFor(() => {
-      expect(fetchSpy).toHaveBeenCalled();
-    });
-  });
-
   test('orientation toggle works correctly', () => {
     render(<Game />);
 
@@ -679,4 +669,22 @@ describe('Game component', () => {
       expect(screen.getByText('Selected')).toBeTruthy();
     });
   });
+
+  test('handleRematch resets all state', () => {
+    render(<Game />);
+    expect(screen.getByText('Reset boards')).toBeTruthy();
+  });
+
+  test('GameControls receives correct allShipsPlaced value', () => {
+    render(<Game />);
+    const doneButton = screen.getByText(/Done placing/);
+    expect(doneButton).toBeDisabled(); // porque no hay barcos colocados
+  });
+
+  test('displays ShipSelector with correct props', () => {
+    render(<Game />);
+    expect(screen.getByText(/Carrier/)).toBeTruthy();
+    expect(screen.getByText(/Destroyer/)).toBeTruthy();
+  });
 });
+

@@ -1,4 +1,4 @@
-import { useEffect, type JSX } from 'react';
+import { type JSX } from 'react';
 import './Game.css';
 import { useGameLogic } from '../../hooks/useGameLogic';
 import { useShipPlacement } from '../../hooks/useShipPlacement';
@@ -22,8 +22,6 @@ export default function Game(): JSX.Element {
         boardA,
         boardB,
         turn,
-        sunkShipsA,
-        sunkShipsB,
         winner,
         placedShipsA,
         placedShipsB,
@@ -35,11 +33,9 @@ export default function Game(): JSX.Element {
         setPlacedShipsB,
         setWinner,
         setLastActionMessage,
+        setGameStarted,
         updateBoard,
         resetBoards,
-        createGame,
-        startGame,
-        gameId,
     } = useGameLogic();
 
     const {
@@ -51,29 +47,23 @@ export default function Game(): JSX.Element {
         setPlacingPlayer,
         setOrientation,
         selectShipToPlace,
-        allPlacedForPlayer,
         finishPlacing,
         placeShip,
         resetPlacement,
+        allPlacedForPlayer,
     } = useShipPlacement({
         boardA,
         boardB,
         placedShipsA,
         placedShipsB,
         shipsCatalog,
-        gameId,
         setBoardAState,
         setBoardBState,
         setPlacedShipsA,
         setPlacedShipsB,
         setLastActionMessage,
-        startGame,
+        setGameStarted,
     });
-
-    useEffect(() => {
-        createGame();
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
 
     const handleResetBoards = () => {
         resetBoards();
@@ -139,8 +129,8 @@ export default function Game(): JSX.Element {
                         attackBoard={boardB}
                         placedShipsDefense={placedShipsA}
                         placedShipsAttack={placedShipsB}
-                        sunkShipsDefense={sunkShipsA}
-                        sunkShipsAttack={sunkShipsB}
+                        sunkShipsDefense={{}}
+                        sunkShipsAttack={{}}
                         updateBoard={updateBoard}
                         selectedShip={selectedShip}
                         onPlaceShip={placeShip}
@@ -155,8 +145,8 @@ export default function Game(): JSX.Element {
                         attackBoard={boardA}
                         placedShipsDefense={placedShipsB}
                         placedShipsAttack={placedShipsA}
-                        sunkShipsDefense={sunkShipsB}
-                        sunkShipsAttack={sunkShipsA}
+                        sunkShipsDefense={{}}
+                        sunkShipsAttack={{}}
                         updateBoard={updateBoard}
                         selectedShip={selectedShip}
                         onPlaceShip={placeShip}

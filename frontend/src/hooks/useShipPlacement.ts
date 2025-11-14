@@ -1,7 +1,5 @@
 import { useState } from 'react';
 import type { PlayerA } from '../pages/Game/Game';
-import { apiFetch } from '../lib/api';
-import { setBoardA, setBoardB, setPlacedShips } from '../lib/data';
 
 interface Ship {
     id: string;
@@ -15,13 +13,12 @@ interface UseShipPlacementProps {
     placedShipsA: Record<string, number[]>;
     placedShipsB: Record<string, number[]>;
     shipsCatalog: Ship[];
-    gameId: string | null;
     setBoardAState: React.Dispatch<React.SetStateAction<(string | null)[]>>;
     setBoardBState: React.Dispatch<React.SetStateAction<(string | null)[]>>;
     setPlacedShipsA: React.Dispatch<React.SetStateAction<Record<string, number[]>>>;
     setPlacedShipsB: React.Dispatch<React.SetStateAction<Record<string, number[]>>>;
     setLastActionMessage: React.Dispatch<React.SetStateAction<string | null>>;
-    startGame: () => Promise<void>;
+    setGameStarted: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 export const useShipPlacement = ({
@@ -30,13 +27,12 @@ export const useShipPlacement = ({
     placedShipsA,
     placedShipsB,
     shipsCatalog,
-    gameId,
     setBoardAState,
     setBoardBState,
     setPlacedShipsA,
     setPlacedShipsB,
     setLastActionMessage,
-    startGame,
+    setGameStarted,
 }: UseShipPlacementProps) => {
     const [selectedShip, setSelectedShip] = useState<Ship | null>(null);
     const [placingPlayer, setPlacingPlayer] = useState<PlayerA>('A');
@@ -73,7 +69,7 @@ export const useShipPlacement = ({
         else setReadyB(true);
 
         if ((player === 'A' ? true : readyA) && (player === 'B' ? true : readyB)) {
-            startGame();
+            setGameStarted(true);
         }
     };
 
@@ -89,7 +85,6 @@ export const useShipPlacement = ({
         const positions: number[] = [];
         const targetBoard = player === 'A' ? boardA : boardB;
 
-        // Calcular posiciones
         if (orientationParam === 'horizontal') {
             if (col + length > 10) {
                 setLastActionMessage('Ship does not fit horizontally (out of bounds)');
@@ -120,54 +115,15 @@ export const useShipPlacement = ({
         const next = [...targetBoard];
         for (const p of positions) next[p] = `ship:${shipId}`;
 
-        const updateLocalState = () => {
-            if (player === 'A') {
-                setBoardAState(next);
-                setBoardA(next);
-                setPlacedShipsA(prev => {
-                    const newPlaced = { ...prev, [shipId]: positions };
-                    setPlacedShips('A', newPlaced);
-                    return newPlaced;
-                });
-            } else {
-                setBoardBState(next);
-                setBoardB(next);
-                setPlacedShipsB(prev => {
-                    const newPlaced = { ...prev, [shipId]: positions };
-                    setPlacedShips('B', newPlaced);
-                    return newPlaced;
-                });
-            }
-            setSelectedShip(null);
-        };
-
-        if (gameId) {
-            apiFetch(`/api/game/${gameId}/place-ship`, {
-                method: 'POST',
-                body: JSON.stringify({
-                    player: player === 'A' ? 1 : 2,
-                    shipType: shipId.toString().toUpperCase(),
-                    x: row,
-                    y: col,
-                    horizontal: orientationParam === 'horizontal'
-                })
-            })
-            .then((resp: any) => {
-                if (!resp.success && resp.success !== undefined) {
-                    setLastActionMessage(resp.message || 'Placement failed');
-                    return;
-                }
-                updateLocalState();
-                setLastActionMessage(resp.message || 'Ship placed');
-            })
-            .catch(err => {
-                console.error('Place ship error', err);
-                setLastActionMessage('Error contacting server');
-            });
+        if (player === 'A') {
+            setBoardAState(next);
+            setPlacedShipsA(prev => ({ ...prev, [shipId]: positions }));
         } else {
-            updateLocalState();
-            setLastActionMessage(`Placed ${shipId} for player ${player}`);
+            setBoardBState(next);
+            setPlacedShipsB(prev => ({ ...prev, [shipId]: positions }));
         }
+        setSelectedShip(null);
+        setLastActionMessage(`Placed ${shipId} for player ${player}`);
     };
 
     const resetPlacement = () => {
@@ -184,12 +140,12 @@ export const useShipPlacement = ({
         orientation,
         readyA,
         readyB,
+        selectShipToPlace,
+        placeShip,
+        finishPlacing,
+        resetPlacement,
         setPlacingPlayer,
         setOrientation,
-        selectShipToPlace,
         allPlacedForPlayer,
-        finishPlacing,
-        placeShip,
-        resetPlacement,
     };
 };
