@@ -158,9 +158,9 @@ export function isGameReadyToStart(
 ): boolean {
   // Check if both players are ready to start the game
   if (currentPlayer === 'A') {
-    return true && readyB;
+    return readyB;
   }
-  return readyA && true;
+  return readyA;
 }
 
 export function applyLocalPlacement(

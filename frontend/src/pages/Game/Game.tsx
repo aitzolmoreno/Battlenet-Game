@@ -476,19 +476,21 @@ export default function Game(): JSX.Element {
                         )}
                     <div className="ships-controls mb-2 flex items-center gap-3">
                         <div>
-                            <label className="text-sm mr-2">Player:</label>
-                            <button className={`px-2 py-1 rounded border ${placingPlayer === 'A' ? 'selected' : ''}`} onClick={() => setPlacingPlayer('A')}>A</button>
-                            <button className={`px-2 py-1 rounded border ${placingPlayer === 'B' ? 'selected' : ''} ml-2`} onClick={() => setPlacingPlayer('B')}>B</button>
+                            <span id="player-label" className="text-sm mr-2">Player:</span>
+                            <button aria-labelledby="player-label" className={`px-2 py-1 rounded border ${placingPlayer === 'A' ? 'selected' : ''}`} onClick={() => setPlacingPlayer('A')}>A</button>
+                            <button aria-labelledby="player-label" className={`px-2 py-1 rounded border ${placingPlayer === 'B' ? 'selected' : ''} ml-2`} onClick={() => setPlacingPlayer('B')}>B</button>
                         </div>
                         <div>
-                            <label className="text-sm mr-2">Ships Orientation:</label>
+                            <span id="orientation-label" className="text-sm mr-2">Ships Orientation:</span>
                             <button
+                                aria-labelledby="orientation-label"
                                 className={`px-2 py-1 rounded border ${orientation === 'horizontal' ? 'selected' : ''}`}
                                 onClick={() => setOrientation('horizontal')}
                             >
                                 Horizontal
                             </button>
                             <button
+                                aria-labelledby="orientation-label"
                                 className={`px-2 py-1 rounded border ${orientation === 'vertical' ? 'selected' : ''} ml-2`}
                                 onClick={() => setOrientation('vertical')}
                             >
